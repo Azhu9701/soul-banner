@@ -126,6 +126,8 @@ soul-banner/
   → 幡主批准 → 注入 summon_prompt → spawn 执行
   → 幡主否决 → 不附体或换魂
   → 无候选魂 → 不附体
+  → 更新 registry.yaml 召唤记录 ← 【反馈闭环】
+  → 存档到 Obsidian vault ← 【Obsidian 存档】
 ```
 
 ### 幡主
@@ -265,6 +267,70 @@ soul-banner/
 - 哪些魂从未被召唤 → 是 trigger 太窄还是领域不匹配？
 - 哪些魂效果评分持续偏低 → 是适用边界误判还是魂本身质量问题？
 - 哪种模式效果最好 → 指导未来模式选择
+
+---
+
+## Obsidian 存档
+
+每次魂魄输出后，自动将内容保存到 Obsidian vault（`/Users/huyi/ob`）中，形成可检索、可关联的持久知识库。
+
+### 前提条件
+
+- Obsidian 桌面端运行中
+- 设置 → General → Command line interface 已开启
+- CLI 路径：`/Users/huyi/.local/bin/obsidian`
+
+### 存档流程
+
+```
+魂输出完成
+  → 提取魂名、模式、任务主题
+  → 组装 YAML frontmatter + Markdown 内容
+  → 用 obsidian create path="..." content="..." 写入 vault
+  → 无需额外触发词，自动执行
+```
+
+若 Obsidian 未运行或 CLI 不可用，跳过存档并提示用户。
+
+### 目录结构
+
+```
+vault/200-领域/万魂幡/
+├── 合议/YYYY-MM-DD-{任务简述}.md
+├── 单魂/{魂名}/YYYY-MM-DD-{任务简述}.md
+├── 辩论/YYYY-MM-DD-{议题}-{魂A}-vs-{魂B}.md
+└── 接力/YYYY-MM-DD-{任务简述}.md
+```
+
+### 笔记格式
+
+每个笔记包含 YAML frontmatter + 正文：
+
+```yaml
+---
+tags: [万魂幡, {模式}, {关键词}]
+date: {YYYY-MM-DD}
+souls: [{参与魂魄}]
+mode: {单魂/合议/辩论/接力}
+---
+```
+
+正文中，魂名自动转为 wiki-link（`[[魂名]]`），在 Obsidian 图谱中形成魂魄关联网络。
+
+### 存档内容
+
+- **单魂**：魂的完整分析输出
+- **合议**：阶段一各魂输出 + 阶段二幡主辩证综合（完整版）
+- **辩论**：正方/反方论证 + 幡主裁决
+- **接力**：各阶段输出 + 幡主衔接点审查
+
+### shell 调用
+
+```bash
+/Users/huyi/.local/bin/obsidian create path="200-领域/万魂幡/{模式}/{子目录}/{文件名}.md" content="{转义后的内容}"
+```
+
+**注意**：content 中的特殊字符（双引号、反斜杠、换行符）需转义。对于多段落长内容，以 `\\n` 替代换行。
 
 ---
 
