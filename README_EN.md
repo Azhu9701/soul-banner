@@ -1,5 +1,7 @@
 # 万魂幡 Soul Banner
 
+[中文](README.md) | [English](README_EN.md)
+
 > *"The banner stirs, and souls arrive unsummoned. Choose a soul by the task, choose a task by the soul. When the task comes, the soul attaches. When the task ends, the soul returns."*
 
 A **knowledge and thinking-pattern orchestration system**. Collect thinking materials from influential figures, structure them into "soul profiles," and automatically match the best soul to possess sub-agents for any given task.
