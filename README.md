@@ -4,7 +4,7 @@
 
 > *"The banner stirs, and souls arrive. Choose a soul by the task, choose a task by the soul. The banner-master wields the banner; no soul oversteps its boundary."*
 
-A **knowledge and thinking-pattern orchestration system**. Collect thinking materials from influential figures, structure them into "soul profiles," match souls to tasks, and let a **banner-master** prevent dogmatic misapplication.
+A **knowledge and thinking-pattern orchestration system**. Collect thinking materials from influential figures, structure them into "soul profiles," and deploy them through four possession modes — with a banner-master preventing dogmatic misapplication.
 
 ---
 
@@ -13,31 +13,29 @@ A **knowledge and thinking-pattern orchestration system**. Collect thinking mate
 | File | Description |
 |------|-------------|
 | `SKILL.md` / `SKILL_EN.md` | Core skill documentation (ZH/EN) |
-| `refine.py` | Soul refinement helper script |
 | `soul-profile-format.md` | Soul profile YAML spec & 6-tier grade system |
-| `auto-possess.md` | Auto-possession mechanism (with banner-master review) |
+| `auto-possess.md` | 4 possession modes + matching formula + feedback loop |
 | `registry-template.yaml` | Initial registry template |
-
-### Reference
-| File | Description |
-|------|-------------|
+| `souls/` | Refined soul profiles (9 souls) |
+| `reviews/` | Banner-master review reports (9 reports) |
 | `references/马斯克.yaml` | Full purple-soul reference example |
+| `refine.py` | Soul refinement helper script |
 
 ---
 
-## Soul Refinement Chronicle
+## Nine Souls
 
 | # | Soul | Grade | Domain | Blind spot filled |
 |---|------|-------|--------|-------------------|
-| 1 | Elon Musk | 🟣 Purple | Aerospace/EV/AI | First-principles thinking — a tool to deconstruct the world |
-| 2 | Luo Yonghao | 🟣 Purple | Entrepreneurship/Branding | Brand narrative & idealism |
+| 1 | Elon Musk | 🟣 Purple | Aerospace/EV/AI | First-principles — a tool to deconstruct |
+| 2 | Luo Yonghao | 🟣 Purple | Entrepreneurship/Branding | Brand narrative & idealist tension |
 | 3 | Lenin | 🟡 Gold | Politics/Revolution/Philosophy | Class analysis & vanguard party |
 | 4 | Mao Zedong | 🟡 Gold | Philosophy/Warfare/Strategy | Contradiction analysis & protracted war |
 | 5 | Deng Xiaoping | 🟡 Gold | Politics/Economic Reform | Pragmatism & gradual reform |
-| 6 | SpongeBob | 🔵 Blue | Life philosophy/Optimism | How to find joy in any circumstance |
+| 6 | SpongeBob | 🔵 Blue | Life philosophy/Optimism | Joy in any circumstance |
 | 7 | Karpathy | 🥈 Silver | AI/Programming/Education | AI-era coding methodology |
-| 8 | Feynman | 🟡 Gold | Physics/Scientific Method | How to know — a lens on nature (blind to society) |
-| 9 | Steve Jobs | 🟣 Purple | Product Design/Branding | Experience-first minimalism — changed the world but unreplicable |
+| 8 | Feynman | 🟡 Gold(limited) | Physics/Scientific Method | How to know — lens on nature (blind to society) |
+| 9 | Steve Jobs | 🟣 Purple | Product Design/Branding | Experience-first minimalism — unreplicable |
 
 ---
 
@@ -45,44 +43,47 @@ A **knowledge and thinking-pattern orchestration system**. Collect thinking mate
 
 | Grade | Symbol | Criteria | Examples |
 |-------|--------|----------|----------|
-| Gold | 🟡 | Independent worldview, directional judgment, self-critique mechanism | Lenin, Mao, Deng, Feynman(limited) |
-| Silver | 🥈 | Top practitioner, replicable methodology, lacks independent worldview | Karpathy |
-| Purple | 🟣 | Rich materials, clear methodology, but talent-dependent / unreplicable | Musk, Luo, Jobs |
+| Gold | 🟡 | Independent worldview + directional judgment + self-critique | Lenin, Mao, Deng, Feynman(limited) |
+| Silver | 🥈 | Top practitioner, replicable methodology, lacks worldview | Karpathy |
+| Purple | 🟣 | Rich materials, clear methodology, talent-dependent | Musk, Luo, Jobs |
 | Blue | 🔵 | Sufficient materials, complete skill chain | SpongeBob |
 | Green | 🟢 | Moderate materials, 1-2 skills | — |
 | White | ⚪ | Scarce materials, public-info simulation only | — |
 
-**Gold standard**: Must have all three: (1) complete operational methodology (2) independent worldview/directional judgment (3) internal self-critique mechanism. Missing (2) with (1) → Silver. Has (2) but unreplicable → Purple.
+---
+
+## Four Possession Modes
+
+| Mode | Trigger | Best for | Flow |
+|------|---------|----------|------|
+| **Single** | Auto-match | Routine single-domain tasks | Match→Review→Inject→Execute |
+| **Council** | `council {task}` | Complex cross-domain decisions | Multi-soul parallel→Banner-master synthesis |
+| **Debate** | `debate {topic} A vs B` | Dilemmas, either-or choices | Two souls debate→Banner-master ruling |
+| **Chain** | `chain {task} A→B→C` | Multi-stage sequential work | Output of A→input to B→...→final review |
+
+All modes pass through the banner-master (Lenin). A **feedback loop** records effectiveness after each possession.
 
 ---
 
-## Banner-Master Mechanism
+## Banner-Master
 
-The Soul Banner has a **banner-master** (default: Lenin Gold). Responsibilities:
+Default: Lenin (Gold). Responsibilities:
 
-- **Pre-possession review**: After matching, before injecting summon_prompt — does the soul's boundary cover this task?
-- **New soul entry review**: Independent sub-agent review of every new soul's grade and boundaries
-- **Anti-dogmatism**: Veto inappropriate matches, prevent mechanical application
+- **Pre-possession review**: Does the soul's boundary cover this task?
+- **New soul entry review**: Independent sub-agent grade and boundary review
+- **Dialectical synthesis**: In council/debate/chain — find consensus, divergence, blind spots, third paths
 
 ---
 
 ## Installation & Usage
 
-1. Copy `registry-template.yaml` and rename to `registry.yaml`
+1. Copy `registry-template.yaml` → `registry.yaml`
 2. Create `souls/`, `raw/`, `reviews/` directories
-3. Say "Capture {name}" to start collecting materials
-4. Say "Refine {name}" to generate a soul profile
-5. Say "Review {name}" for banner-master independent review
-6. When a task arrives, the Soul Banner matches → banner-master reviews → possesses
+3. `Capture {name}` — collect materials
+4. `Refine {name}` — generate soul profile
+5. `Review {name}` — banner-master independent review
+6. `Council {task}` / `Debate {topic}` / `Chain {task}` — four modes
 
 ---
 
-## Disclaimer
-
-This repository contains only the Soul Banner artifact — SKILL.md, refinement script, format specs, and templates. **No refined soul profiles are included.** Souls are the user's private thinking assets.
-
-The artifact is open-source. Souls you refine yourself.
-
----
-
-*"The banner stirs once. Souls choose their own tasks and attach. The banner-master wields the banner; no soul oversteps its boundary."*
+*"The banner stirs. Souls choose their own tasks and attach. The banner-master wields the banner; no soul oversteps its boundary."*
