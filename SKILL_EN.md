@@ -1,20 +1,22 @@
 ---
 name: soul-banner
-description: A knowledge and thinking-pattern orchestration system. Collect thinking materials from influential figures (Soul Capture), structure them into soul profiles (Soul Refine), and auto-match souls to possess sub-agents when tasks arrive (Auto-Possess). Trigger words include: capture, refine, what souls are in the banner, release soul, upgrade soul, use [figure] to [task]. Also used for any scenario involving domain-expert thinking simulation, cross-boundary analysis, high-risk decision assessment, or first-principles analysis — the Soul Banner auto-senses tasks and matches the best soul.
+description: Knowledge and thinking-pattern orchestration system. Capture thinking materials from influential figures (Soul Capture), structure them into soul profiles (Soul Refine), match souls to sub-agents via four modes (Single/Council/Debate/Chain) with banner-master anti-dogmatism review. Trigger: capture, refine, what souls, release, review, council, debate, chain, banner record. Use proactively whenever the user needs multi-perspective analysis, cross-domain decisions, expert thinking simulation, first-principles reasoning, or dialectical synthesis — even if they don't explicitly name the Soul Banner, trigger when tasks involve "analyze from X's perspective" or "think like X".
 ---
 
 # Soul Banner (万魂幡)
 
-> *"The banner stirs, and souls arrive unsummoned. Choose a soul by the task, choose a task by the soul. When the task comes, the soul attaches. When the task ends, the soul returns."*
+> *"The banner stirs, and souls arrive. Choose a soul by the task, choose a task by the soul. The banner-master wields the banner; no soul oversteps its boundary."*
 
 ## Overview
 
 The Soul Banner is a **knowledge and thinking-pattern orchestration system**:
 
-- **Capture**: Web search + user contribution — collect multi-dimensional materials on target figures
-- **Refine**: Structure raw materials into Soul Profile YAML, assign a grade
-- **Auto-Possess**: When the main agent prepares to spawn a sub-agent, auto-scan and match the best soul to inject
-- **Manage**: View grades, upgrade souls, release souls
+- **Capture**: Web search + user contribution across 8 dimensions
+- **Refine**: Structure raw materials into Soul Profile YAML with grade
+- **Possess**: Match souls to sub-agents via 4 modes (Single/Council/Debate/Chain)
+- **Banner-Master Review**: Lenin reviews every possession for boundary fit, anti-dogmatism
+- **Independent Review**: New souls reviewed by banner-master sub-agent, not main agent simulation
+- **Feedback Loop**: Record effectiveness after each possession, accumulate calibration data
 
 ---
 
@@ -22,117 +24,121 @@ The Soul Banner is a **knowledge and thinking-pattern orchestration system**:
 
 | Trigger | Function |
 |---------|----------|
-| `Capture {name}` | Start soul capture (8-dimension web search + optional user material) |
-| `Refine {name}` | Refine raw materials into a Soul Profile |
-| `What souls are in the banner` | View list of refined souls |
+| `Capture {name}` | 8-dimension web search + optional user materials |
+| `Refine {name}` | Refine raw materials → Soul Profile, assign grade |
+| `What souls are in the banner` | View all souls, grades, review conclusions |
 | `Release {name}` | Delete soul profile (keep raw materials) |
-| `Upgrade {name}` | Re-refine with new materials |
-| `Use {name} to {task}` | Manually specify a soul for a task |
+| `Upgrade {name}` | Re-capture → Re-refine → Banner-master review |
+| `Review {name}` | Banner-master sub-agent independent review |
+| `Use {name} to {task}` | Manual soul assignment (skip auto-match) |
+| `Council {task}` | Multi-soul parallel → Banner-master synthesis |
+| `Debate {topic} SoulA vs SoulB` | Two souls debate → Banner-master ruling |
+| `Chain {task} A→B→C` | Sequential: output of A → input to B → ... |
+| `Banner record` | View possession effectiveness history |
 
 ---
 
-## File Structure
+## Four Possession Modes
+
+### Single: Match → Banner-master review → Inject → Execute
+Routine single-domain tasks. E.g., coding → Karpathy, science → Feynman.
+
+### Council (`Council {task}`)
+**Two-phase execution (critical):** Analysis parallel → wait all → synthesis sequential.
 
 ```
-Project Root/
-├── registry.yaml          # Soul registry (runtime data)
-├── souls/{name}.yaml      # Refined soul profiles (runtime data)
-└── raw/{name}/            # Raw capture materials (runtime data)
+Phase 1 (parallel): N souls analyze independently
+Phase 2 (sequential): Banner-master reads all actual outputs → dialectical synthesis
 ```
 
-Initialize by copying `assets/registry.yaml` to `registry.yaml` on first use.
+For complex cross-domain decisions. Banner-master finds consensus, divergence, blind spots, and a third path.
+
+### Debate (`Debate {topic} SoulA vs SoulB`)
+Two souls with opposing stances debate. Banner-master rules: who is right under what conditions? Is there a third way?
+
+### Chain (`Chain {task} A→B→C`)
+Multi-stage tasks. Output of A → input to B → ... Banner-master reviews at each handoff.
 
 ---
 
-## Soul Capture
+## Review
 
-1. Create `raw/{name}/` directory
-2. Web search across 8 dimensions: core thinking framework, decision patterns, management style, tech vision, communication style, work methods, representative quotes, controversy materials
-3. User may provide additional materials → `raw/{name}/user_contribution.md`
-4. Save as `raw/{name}/search_materials.md`
-5. Evaluate material sufficiency, supplement if lacking
+Every new soul must pass banner-master **sub-agent independent review**:
 
-## Soul Refine
-
-1. Read all materials under `raw/{name}/`
-2. Structured extraction: identity, core thinking, decision patterns, expression style, expertise, representative cases
-3. Assign grade → match bindable Skills → generate `souls/{name}.yaml` → update `registry.yaml`
-
-Helper: `python3 scripts/refine.py --input raw/{name}/search_materials.md`
-
-> Grade system, scoring formula, and YAML format: see **[references/soul-profile-format.md](references/soul-profile-format.md)**
-
-### Gold Soul Review
-
-If a Gold soul exists in the banner, all newly refined souls must pass a **theoretical review** by the Gold soul before entering:
-
-- Gold soul examines whether the new soul's methodology is internally coherent
-- Gold soul annotates the new soul's applicable boundaries and potential biases
-- Gold soul adds a `gold_review` field in the registry
-
-This is not hierarchical suppression — the Gold soul review ensures **quality reliability and boundary clarity** for all souls. After review, Gold and other souls collaborate as equals.
-
-## Auto-Possess
-
-When the main agent prepares to spawn a sub-agent:
-
-1. Read `registry.yaml`, iterate over each soul's `trigger`, compute match score
-2. Match ≥ 70 → auto-inject `summon_prompt` into sub-agent task prefix
-3. Multiple matches ≥ 70 → take the highest score; no match → no possession
-4. If a Gold soul is online, Gold soul performs **final confirmation** on the match result
-
-> Match scoring formula, decision thresholds, and trigger design: see **[references/auto-possess.md](references/auto-possess.md)**
-
-## Correction & Evolution
-
-After each soul execution:
-
-1. Update `summoned_count`
-2. Record actual effectiveness and user feedback
-3. If 3 consecutive possessions underperform, trigger **soul correction** — re-examine trigger conditions and methodology applicability
-4. Gold soul periodically (every 5 new souls or every month) conducts a **dialectical analysis** of all souls
-
-> Souls are not static archives. Revolutionary thinking is forged in practice. Your souls need practice too.
-
----
-
-## Banner Master's Notes
-
-You are not an external scheduler standing outside theory. After each soul possession, reflect:
-
-- **Why** was this soul's method suitable for this task?
-- What are its **limitations**? Which judgments were the soul's biases?
-- If a different soul handled the same task, how would the conclusion differ?
-
-The ultimate goal is not to own more souls — it's to **internalize the Soul Banner's pluralistic thinking into your own theoretical literacy**. The banner's final purpose is for you to no longer need the banner.
-
----
-
-## Management
-
-- **View**: Read `registry.yaml`, list soul names, grades, domains, summon counts
-- **Release**: Delete `souls/{name}.yaml`, update `registry.yaml`, keep `raw/` materials
-- **Upgrade**: Re-capture → Re-refine → Overwrite original profile
-
----
-
-## Refinement Helper Script
-
-```bash
-python3 scripts/refine.py --input raw/{name}/search_materials.md
-python3 scripts/refine.py --input raw/{name}/search_materials.md -o souls/{name}.yaml
+```
+Main agent spawns banner-master sub-agent
+  → Sub-agent loads banner-master summon_prompt
+  → Reads the target soul's full profile
+  → Independently writes review:
+      1. Affirmations (materialist/dialectical alignment)
+      2. Critiques (class analysis, boundary issues, untested premises)
+      3. Grade ruling (upgrade/downgrade/maintain, with reasoning)
+      4. Applicable boundaries (use/forbidden domains)
+  → Main agent writes conclusions to soul's notes field
+  → Review saved to reviews/
 ```
 
-Provides: word count stats, domain identification, methodology keyword matching, skill recommendations, style characteristic recognition, grade scoring.
+**Why sub-agent**: Main agent simulation = "playing chess against yourself." Sub-agent with banner-master soul has independent perspective. Proven to catch contradictions the main agent missed.
 
 ---
 
-## References
+## Grade System (6 Tiers)
 
-- **[Soul Profile Format & Grade System](references/soul-profile-format.md)** — YAML template, scoring formula, five-grade system
-- **[Auto-Possess Mechanism](references/auto-possess.md)** — Match scoring, decision thresholds, trigger design
-- **[Musk Soul Example](references/马斯克.yaml)** — Complete Purple soul reference (🟣)
+| Grade | Symbol | Score | Definition |
+|-------|--------|-------|------------|
+| White | ⚪ | 0-30 | Scarce materials, public-info simulation only |
+| Green | 🟢 | 31-60 | Moderate materials, 1-2 skills |
+| Blue | 🔵 | 61-90 | Sufficient materials, complete skill chain |
+| Purple | 🟣 | 91-115 | Rich materials, clear methodology, but talent-dependent |
+| Silver | 🥈 | 116-150 | Top practitioner, replicable methodology, lacks independent worldview |
+| Gold | 🟡 | 151+ | Independent worldview, directional judgment, self-critique mechanism |
+
+**Gold standard**: Must have all three: (1) complete operational methodology (2) independent worldview/directional judgment (3) internal self-critique. Missing (2) with (1) → Silver. Has (2) but unreplicable → Purple.
 
 ---
 
-*"The banner stirs once. Souls choose their own tasks and attach. The banner-bearer simply walks the path — the ten thousand souls within will find their moment."*
+## Feedback Loop
+
+After each possession, update `registry.yaml`:
+
+```yaml
+summon_records:
+  - soul: "{name}"
+    task: "{summary}"
+    mode: "single/council/debate/chain"
+    date: "YYYY-MM-DD"
+    effectiveness: "effective/partially effective/ineffective"
+    notes: "{why? what conditions affected the outcome?}"
+```
+
+Accumulated data calibrates matching, discovers trigger deviations, and identifies over-dependency on specific souls.
+
+---
+
+## Honest Assessment
+
+What this system is NOT:
+- Not an automatic scheduler — matching depends on main agent judgment
+- Not truly independent review — banner-master sub-agent uses the same underlying model
+
+What actually works:
+- summon_prompt injection changes sub-agent output quality and thinking patterns
+- Banner-master review prevents dogmatic misapplication
+- Independent sub-agent review catches contradictions the main agent misses
+- Soul profiles have standalone value as structured knowledge bases
+
+---
+
+## Bundled Resources
+
+Load on demand (not all at once):
+
+- **[auto-possess.md](auto-possess.md)** — Read when computing match scores or using Council/Debate/Chain modes
+- **[soul-profile-format.md](soul-profile-format.md)** — Read when refining new souls or assigning grades
+- **[references/马斯克.yaml](references/马斯克.yaml)** — Read before first refinement as format reference
+- **souls/{name}.yaml** — Read target soul's summon_prompt and trigger when matching
+- **registry.yaml** — Read for banner overview and match computation
+
+---
+
+*"The banner stirs. Souls choose their own tasks and attach. The banner-master wields the banner; no soul oversteps its boundary."*
