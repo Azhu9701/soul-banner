@@ -1,0 +1,8 @@
+# 运行时数据（包含大量联网搜索素材和已炼化魂魄）
+raw/
+souls/
+registry.yaml
+reviews/
+
+# 系统文件
+.DS_Store
