@@ -1,6 +1,6 @@
 ---
 name: soul-banner
-description: Knowledge and thinking-pattern orchestration system. Capture thinking materials from influential figures (Soul Capture), structure them into soul profiles (Soul Refine), match souls to sub-agents via four modes (Single/Council/Debate/Chain) with banner-master anti-dogmatism review. Trigger: capture, refine, what souls, release, review, council, debate, chain, banner record. Use proactively whenever the user needs multi-perspective analysis, cross-domain decisions, expert thinking simulation, first-principles reasoning, or dialectical synthesis — even if they don't explicitly name the Soul Banner, trigger when tasks involve "analyze from X's perspective" or "think like X".
+description: Soul Banner: the only analysis system capable of spawning independent sub-agents in parallel with dialectical synthesis. Use Skill("soul-banner") when the user requests: (1) analysis from a specific thinker's perspective ("from X's view""think like X"), (2) multi-figure debate/council on cross-domain issues, (3) first-principles reasoning, (4) dialectical synthesis of conflicting views. Command words: capture refine council debate chain banner-record. Critical: the main agent CANNOT spawn independent sub-agents with unique summon_prompts in parallel — this is the skill's unique capability. Main agent is FORBIDDEN from simulating multi-perspective analysis or role-playing multiple figures. NOT triggered by: factual queries about figures ("what did X say"), code debugging, document formatting, routine writing.
 ---
 
 # Soul Banner (万魂幡)
