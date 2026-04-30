@@ -38,10 +38,34 @@ The Soul Banner is a **knowledge and thinking-pattern orchestration system**:
 
 ---
 
+## Capture (收魂)
+
+### Workflow
+
+1. Create `raw/{name}/` directory
+2. **Multi-engine search via tmwd-bridge** across 8 dimensions (see below)
+3. User may contribute materials → `raw/{name}/用户供奉.md`
+4. Save as `raw/{name}/搜索素材.md`
+5. Assess sufficiency; supplement if needed
+
+### Search via tmwd-bridge
+
+Capture searches use tmwd-bridge to control a real Chrome browser, preserving login state and search engine preferences. Each of the 8 dimensions is searched across 3 engines (Baidu, Bing, Google).
+
+**Init**: `from TMWebDriver import TMWebDriver; d = TMWebDriver()`
+
+**Search pattern**: Navigate → random delay (2-4s) → extract top 8 results → deep-read top 3-5 → aggregate findings. Simulate scrolling between actions.
+
+**Anti-detection**: 2-4s random delays, 5s+ gap between engines for same dimension, total search 15-25 min.
+
+**Fallback**: If tmwd-bridge unavailable, fall back to `byted-web-search` or `WebSearch`.
+
+---
+
 ## Four Possession Modes
 
-### Single: Match → Banner-master review → Inject → Execute
-Routine single-domain tasks. E.g., coding → Karpathy, science → Feynman.
+### Single: Match → Banner-master sub-agent review (mandatory, no fast-path) → Inject → Execute
+Routine single-domain tasks. E.g., coding → Karpathy, science → Feynman. Even for single-soul possession, Lenin sub-agent must review the match — main agent may not self-judge suitability.
 
 ### Council (`Council {task}`)
 **Two-phase execution (critical):** Analysis parallel → wait all → synthesis sequential.
@@ -60,6 +84,12 @@ Two souls with opposing stances debate. Banner-master rules: who is right under 
 Multi-stage tasks. Output of A → input to B → ... Banner-master reviews at each handoff.
 
 ---
+
+## Second Review Officer
+
+Mao Zedong (🟡 Gold) is the banner's second review officer. **Trigger**: when Lenin's review recommends Lenin himself as the analysis soul.
+
+Since Lenin is both the only banner-master reviewer AND the only soul capable of class analysis, this creates a structural blind spot — the reviewer recommends himself. Mao independently verifies: Is Lenin really the best choice? Any blind spot? Need council supplementation? Returns: approve / veto with alternative.
 
 ## Review
 

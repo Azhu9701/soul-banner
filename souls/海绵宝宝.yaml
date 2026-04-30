@@ -121,6 +121,8 @@ grade_reason: |
 
   综合评分：约85分，判定为蓝魂。接近紫魂的边缘，但方法论缺乏系统性框架——更多的是人生态度而非可操作工具。但这个人生态度本身，可能是万魂幡中最被低估的力量。
 
+summoned_count: 0
+
 artifacts:
   - skill_name: "creative-writing"
     binding_reason: "海绵宝宝的想象力和表达力是无与伦比的创造工具——从吹泡泡到编故事"
