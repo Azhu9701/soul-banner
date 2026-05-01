@@ -27,16 +27,9 @@ GRADE_THRESHOLDS = {
     "白": (0, 30),
     "绿": (31, 60),
     "蓝": (61, 90),
-    "紫": (91, 120),
-    "金": (121, float('inf'))
-}
-
-GRADE_WEIGHTS = {
-    "字数": 0.1,          # 每千字 +1 分
-    "领域数": 10,         # 每个领域 +10 分
-    "方法论明确度": 20,   # 高/中/低 = 20/10/0
-    "可匹配Skill数": 15,  # 每个可匹配 Skill +15 分
-    "素材来源数": 5,      # 每个独立来源 +5 分
+    "紫": (91, 115),
+    "银": (116, 150),
+    "金": (151, float('inf'))
 }
 
 # 关键方法论关键词
@@ -151,16 +144,7 @@ def calculate_grade(
     
     返回: (品级, 总分, 原因)
     """
-    # 计算总分
-    score = (
-        word_count * GRADE_WEIGHTS["字数"] / 1000 +
-        domain_count * GRADE_WEIGHTS["领域数"] +
-        (20 if methodology_count >= 3 else 10 if methodology_count >= 1 else 0) * GRADE_WEIGHTS["方法论明确度"] / 20 +
-        skill_count * GRADE_WEIGHTS["可匹配Skill数"] +
-        source_count * GRADE_WEIGHTS["素材来源数"]
-    )
-    
-    # 简化计算：字数/1000 * 0.1 + 领域数*10 + 方法论*10 + Skill数*15 + 来源数*5
+    # 品级分 = 素材字数/1000 + 领域数×10 + 方法论关键词数×10 + 可匹配Skill数×15 + 素材来源数×5
     score = word_count / 1000 + domain_count * 10 + methodology_count * 10 + skill_count * 15 + source_count * 5
     
     # 判定品级
@@ -301,7 +285,8 @@ def main():
     )
     
     print(f"\n🏆 品级判定:")
-    print(f"   品级: {'⚪' if grade=='白' else '🟢' if grade=='绿' else '🔵' if grade=='蓝' else '🟣' if grade=='紫' else '🟡'} {grade}魂")
+    grade_emoji = {'白':'⚪','绿':'🟢','蓝':'🔵','紫':'🟣','银':'🥈','金':'🟡'}.get(grade, '⚪')
+    print(f"   品级: {grade_emoji} {grade}魂")
     print(f"   评分: {score} 分")
     print(f"   原因: {reason}")
     
@@ -321,6 +306,221 @@ def main():
     print("\n" + "=" * 60)
     print("💡 提示: 这是辅助工具，实际炼化由 Agent 主导完成")
     print("=" * 60)
+
+
+# ============================================================
+# YAML 格式校验
+# ============================================================
+
+REQUIRED_FIELDS = [
+    'name', 'title', 'grade', 'domain',
+    'mind', 'voice', 'skills_expertise',
+    'trigger',           # 必须是 dict，含 keywords/domains/scenarios/exclude
+    'grade_reason', 'artifacts', 'summon_prompt',
+    'source_materials', 'refined_at',
+]
+
+# 推荐但非必须的字段（缺了只 warning）
+NICE_TO_HAVE_FIELDS = [
+    'skills_expertise_description',
+    'notes',
+    'gold_review',
+]
+
+TRIGGER_REQUIRED_KEYS = ['keywords', 'domains', 'scenarios', 'exclude']
+ARTIFACT_REQUIRED_KEYS = ['skill_name', 'binding_reason']
+
+# 格式化陷阱检测：这些字段是 registry 用的，不应出现在魂 YAML 中
+REGISTRY_ONLY_FIELDS = [
+    'trigger_keywords_summary',
+    'trigger_scenarios_summary',
+    'trigger_exclude_summary',
+    'source_summary',
+]
+
+
+def validate_soul(yaml_path: str) -> dict:
+    """校验魂魄 YAML 文件格式
+
+    返回: {'valid': bool, 'errors': [...], 'warnings': [...]}
+    """
+    import yaml as _yaml
+    result = {'valid': True, 'errors': [], 'warnings': []}
+
+    with open(yaml_path, 'r', encoding='utf-8') as f:
+        soul = _yaml.safe_load(f)
+
+    # 1. 检查必填字段
+    for field in REQUIRED_FIELDS:
+        if field not in soul or soul[field] is None:
+            result['errors'].append(f"缺少必填字段: {field}")
+            result['valid'] = False
+
+    # 1b. 检查推荐字段
+    for field in NICE_TO_HAVE_FIELDS:
+        if field not in soul or soul[field] is None:
+            result['warnings'].append(f"建议添加字段: {field}")
+
+    # 2. 检查 registry 格式误用
+    for field in REGISTRY_ONLY_FIELDS:
+        if field in soul:
+            result['errors'].append(
+                f"发现 registry 专用字段 '{field}' —— 魂 YAML 应使用结构化格式 "
+                f"(trigger: {{keywords: [], ...}})，而非 summary 字符串"
+            )
+            result['valid'] = False
+
+    # 3. 检查 trigger 结构
+    if 'trigger' in soul and isinstance(soul['trigger'], dict):
+        trigger = soul['trigger']
+        for key in TRIGGER_REQUIRED_KEYS:
+            if key not in trigger or not trigger[key]:
+                result['errors'].append(f"trigger 缺少子字段: {key}")
+                result['valid'] = False
+
+        # 检查 keywords 和 exclude 是否为列表
+        for key in ['keywords', 'exclude', 'domains', 'scenarios']:
+            if key in trigger and not isinstance(trigger[key], list):
+                result['errors'].append(f"trigger.{key} 应为列表，当前为 {type(trigger[key]).__name__}")
+                result['valid'] = False
+    else:
+        result['errors'].append("trigger 字段缺失或不是 dict")
+        result['valid'] = False
+
+    # 4. 检查 artifacts 结构
+    if 'artifacts' in soul and isinstance(soul['artifacts'], list):
+        for i, art in enumerate(soul['artifacts']):
+            if isinstance(art, dict):
+                for key in ARTIFACT_REQUIRED_KEYS:
+                    if key not in art:
+                        result['errors'].append(f"artifacts[{i}] 缺少: {key}")
+                        result['valid'] = False
+            else:
+                result['errors'].append(
+                    f"artifacts[{i}] 应为 {{skill_name, binding_reason}} dict，"
+                    f"当前为 {type(art).__name__}"
+                )
+                result['valid'] = False
+
+    # 5. 质量检查 (warnings)
+    if 'summon_prompt' in soul and isinstance(soul['summon_prompt'], str):
+        prompt_len = len(soul['summon_prompt'])
+        if prompt_len < 2000:
+            result['warnings'].append(f"summon_prompt 较短 ({prompt_len} chars)，建议 >= 5000")
+    else:
+        result['warnings'].append("summon_prompt 缺失或非字符串")
+
+    if 'mind' in soul and isinstance(soul['mind'], str):
+        if len(soul['mind']) < 300:
+            result['warnings'].append(f"mind 较短 ({len(soul['mind'])} chars)，建议 >= 800")
+    if 'voice' in soul and isinstance(soul['voice'], str):
+        if len(soul['voice']) < 200:
+            result['warnings'].append(f"voice 较短 ({len(soul['voice'])} chars)，建议 >= 400")
+
+    if 'skills_expertise' in soul and isinstance(soul['skills_expertise'], list):
+        if len(soul['skills_expertise']) < 3:
+            result['warnings'].append(f"skills_expertise 仅有 {len(soul['skills_expertise'])} 项，建议 >= 5")
+
+    return result
+
+
+def validate_all_souls(souls_dir: str) -> dict:
+    """批量校验所有魂魄"""
+    from pathlib import Path
+    results = {}
+    for yaml_file in sorted(Path(souls_dir).glob('*.yaml')):
+        results[yaml_file.name] = validate_soul(str(yaml_file))
+    return results
+
+
+# ============================================================
+# Obsidian 自动联动
+# ============================================================
+
+OBSIDIAN_VAULT = None  # 首次使用时探测
+
+def get_obsidian_vault() -> str | None:
+    """获取 Obsidian vault 路径"""
+    global OBSIDIAN_VAULT
+    if OBSIDIAN_VAULT:
+        return OBSIDIAN_VAULT
+    import subprocess
+    try:
+        result = subprocess.run(
+            ['obsidian', 'eval', 'code=app.vault.adapter.basePath'],
+            capture_output=True, text=True, timeout=5
+        )
+        path = result.stdout.strip()
+        if path and '=>' in path:
+            path = path.split('=>')[-1].strip()
+        if path and path != 'null' and path != 'undefined':
+            OBSIDIAN_VAULT = path
+            return path
+    except Exception:
+        pass
+    return None
+
+
+def sync_soul_to_obsidian(yaml_path: str) -> str | None:
+    """将魂魄 YAML 同步为 Obsidian wiki-link 版 Markdown
+
+    返回写入的路径，失败返回 None
+    """
+    vault = get_obsidian_vault()
+    if not vault:
+        return None
+
+    import yaml as _yaml
+    from pathlib import Path
+    from datetime import datetime
+
+    with open(yaml_path, 'r', encoding='utf-8') as f:
+        soul = _yaml.safe_load(f)
+
+    name = soul.get('name', Path(yaml_path).stem)
+    vault_dir = Path(vault) / '万魂幡' / '魂魄'
+    vault_dir.mkdir(parents=True, exist_ok=True)
+
+    # 生成 wiki-link 版 Markdown
+    grade_symbol = soul.get('grade_symbol', '⚪')
+    grade = soul.get('grade', '?')
+    trigger = soul.get('trigger', {})
+    gold_review = soul.get('gold_review', '')
+    mind = soul.get('mind', '')
+    voice = soul.get('voice', '')
+
+    md = f"""---
+tags: [万魂幡, 魂魄, {', '.join(soul.get('domain', [])[:3])}]
+date: {datetime.now().strftime('%Y-%m-%d')}
+grade: {grade_symbol}{grade}魂
+domain: {soul.get('domain', [])}
+---
+
+# {name}
+
+**{soul.get('title', '')}**
+
+## 核心哲学
+
+{mind if mind else '（待补充）'}
+
+## 表达风格
+
+{voice if voice else '（待补充）'}
+
+## 触发条件
+
+- **关键词**: {', '.join(trigger.get('keywords', ['?'])[:10])}
+- **场景**: {', '.join(trigger.get('scenarios', ['?'])[:5])}
+- **排除**: {', '.join(trigger.get('exclude', ['?'])[:5])}
+
+## 幡主审查
+
+{gold_review if gold_review else '（待审查）'}
+"""
+    out_path = vault_dir / f"{name}.md"
+    out_path.write_text(md, encoding='utf-8')
+    return str(out_path)
 
 
 if __name__ == "__main__":

@@ -16,39 +16,37 @@ A **knowledge and thinking-pattern orchestration system**. Collect thinking mate
 | `soul-profile-format.md` | Soul profile YAML spec & 6-tier grade system |
 | `auto-possess.md` | 4 possession modes + matching formula + feedback loop |
 | `registry-template.yaml` | Initial registry template |
-| `souls/` | Refined soul profiles (9 souls) |
-| `reviews/` | Banner-master review reports (9 reports) |
+| `souls/` | Refined soul profiles (includes SpongeBob sample) |
+| `reviews/` | Review reports directory |
 | `references/马斯克.yaml` | Full purple-soul reference example |
 | `refine.py` | Soul refinement helper script |
+| `scripts/` | Search, discipline, audit tool scripts |
 
 ---
 
-## Nine Souls
+## Quick Start
 
-| # | Soul | Grade | Domain | Blind spot filled |
-|---|------|-------|--------|-------------------|
-| 1 | Elon Musk | 🟣 Purple | Aerospace/EV/AI | First-principles — a tool to deconstruct |
-| 2 | Luo Yonghao | 🟣 Purple | Entrepreneurship/Branding | Brand narrative & idealist tension |
-| 3 | Lenin | 🟡 Gold | Politics/Revolution/Philosophy | Class analysis & vanguard party |
-| 4 | Mao Zedong | 🟡 Gold | Philosophy/Warfare/Strategy | Contradiction analysis & protracted war |
-| 5 | Deng Xiaoping | 🟡 Gold | Politics/Economic Reform | Pragmatism & gradual reform |
-| 6 | SpongeBob | 🔵 Blue | Life philosophy/Optimism | Joy in any circumstance |
-| 7 | Karpathy | 🥈 Silver | AI/Programming/Education | AI-era coding methodology |
-| 8 | Feynman | 🟡 Gold(limited) | Physics/Scientific Method | How to know — lens on nature (blind to society) |
-| 9 | Steve Jobs | 🟣 Purple | Product Design/Branding | Experience-first minimalism — unreplicable |
+1. Copy `registry-template.yaml` → `registry.yaml`
+2. Create `raw/` directory
+3. **Capture**: `收魂 {name}` — web search to collect materials
+4. **Refine**: `炼化 {name}` — generate soul profile YAML
+5. **Review**: `审查 {name}` — banner-master independent review
+6. **Possess**: `用{name}来{task}` / `合议 {task}` / `辩论 {topic}` / `接力 {task}`
+
+The repo ships with `souls/海绵宝宝.yaml` as a sample soul demonstrating the full YAML format. `references/马斯克.yaml` provides a purple-soul format reference.
 
 ---
 
 ## Grade System (6 Tiers)
 
-| Grade | Symbol | Criteria | Examples |
-|-------|--------|----------|----------|
-| Gold | 🟡 | Independent worldview + directional judgment + self-critique | Lenin, Mao, Deng, Feynman(limited) |
-| Silver | 🥈 | Top practitioner, replicable methodology, lacks worldview | Karpathy |
-| Purple | 🟣 | Rich materials, clear methodology, talent-dependent | Musk, Luo, Jobs |
-| Blue | 🔵 | Sufficient materials, complete skill chain | SpongeBob |
-| Green | 🟢 | Moderate materials, 1-2 skills | — |
-| White | ⚪ | Scarce materials, public-info simulation only | — |
+| Grade | Symbol | Criteria |
+|-------|--------|----------|
+| Gold | 🟡 | Independent worldview + directional judgment + institutional self-critique |
+| Silver | 🥈 | Top practitioner, replicable methodology, lacks independent worldview |
+| Purple | 🟣 | Rich materials, clear methodology, talent-dependent |
+| Blue | 🔵 | Sufficient materials, complete skill chain |
+| Green | 🟢 | Moderate materials, 1-2 skills |
+| White | ⚪ | Scarce materials, public-info simulation only |
 
 ---
 
@@ -61,28 +59,32 @@ A **knowledge and thinking-pattern orchestration system**. Collect thinking mate
 | **Debate** | `debate {topic} A vs B` | Dilemmas, either-or choices | Two souls debate→Banner-master ruling |
 | **Chain** | `chain {task} A→B→C` | Multi-stage sequential work | Output of A→input to B→...→final review |
 
-All modes pass through the banner-master (Lenin). A **feedback loop** records effectiveness after each possession.
+All modes pass through the banner-master review. A **feedback loop** records effectiveness after each possession.
 
 ---
 
 ## Banner-Master
 
-Default: Lenin (Gold). Responsibilities:
+A spawned gold-soul sub-agent serving as the system's quality control. Injected via `summon_prompt` for independent perspective — not played by the main agent.
 
 - **Pre-possession review**: Does the soul's boundary cover this task?
-- **New soul entry review**: Independent sub-agent grade and boundary review
-- **Dialectical synthesis**: In council/debate/chain — find consensus, divergence, blind spots, third paths
+- **New soul entry review**: Independent sub-agent grade and boundary review (8 mandatory sections)
+- **Dialectical synthesis**: In council/debate/chain — find consensus, divergence, blind spots, principal contradiction, action plan
+
+The banner-master role is configurable — choose your most trusted reviewing soul. The system supports a dual-review mechanism (second reviewer triggers when the primary recommends themselves).
 
 ---
 
 ## Installation & Usage
 
-1. Copy `registry-template.yaml` → `registry.yaml`
-2. Create `souls/`, `raw/`, `reviews/` directories
-3. `Capture {name}` — collect materials
-4. `Refine {name}` — generate soul profile
-5. `Review {name}` — banner-master independent review
-6. `Council {task}` / `Debate {topic}` / `Chain {task}` — four modes
+1. Clone into your Claude Code skills directory
+2. Copy `registry-template.yaml` → `registry.yaml`
+3. Create `raw/` directory (for collected materials)
+4. Optional env vars: `OBSIDIAN_VAULT` (archive path), `SOUL_BANNER_HOME` (install path)
+5. `Capture {name}` — collect materials
+6. `Refine {name}` — generate soul profile
+7. `Review {name}` — banner-master independent review
+8. `Council {task}` / `Debate {topic}` / `Chain {task}` — four modes
 
 ---
 
