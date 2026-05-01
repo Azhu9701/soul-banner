@@ -23,19 +23,18 @@ COMMAND_WORDS = [
     "升级魂魄", "幡主",
 ]
 
-# === 二级：魂魄名（从 registry.yaml 动态加载） ===
-SOUL_NAMES = [
-    "马斯克", "费曼", "邓小平", "列宁", "毛泽东",
-    "乔布斯", "罗永浩", "Karpathy", "海绵宝宝",
-]
+# === 二级：魂魄名（唯一数据源：registry.yaml） ===
+# 不再维护硬编码列表——registry.yaml 是魂魄名的唯一权威来源。
+# 加载失败时 Level 2 跳过（不静默退化），Level 1/3 仍正常工作。
 
 # 视角句式（regex 模式）
 PERSPECTIVE_PATTERNS = [
     r"从.{0,4}视角",
     r"用.{0,4}思维",
+    r"用.{0,12}(?:分析|来|解剖|批判|拆解|解读)",
     r"从.{0,4}角度",
     r"以.{0,4}立场",
-    r"作为.{0,4}分析",
+    r"作为.{0,12}(?:分析|解剖|看)",
     r"让.{0,6}分析",
 ]
 
@@ -64,7 +63,7 @@ EXCLUDE_PATTERNS = [
 
 
 def load_soul_names():
-    """从 registry.yaml 动态加载魂魄名列表"""
+    """从 registry.yaml 动态加载魂魄名列表。失败则返回空列表——不静默退化。"""
     registry_path = os.path.join(SKILL_DIR, "registry.yaml")
     try:
         with open(registry_path) as f:
@@ -74,9 +73,12 @@ def load_soul_names():
         names = [s["name"] for s in data.get("魂魄", [])]
         if names:
             return names
-    except Exception:
-        pass
-    return SOUL_NAMES
+        print(json.dumps({"systemMessage": "【万魂幡警告】registry.yaml 中无魂魄记录"}), file=sys.stderr)
+    except FileNotFoundError:
+        print(json.dumps({"systemMessage": "【万魂幡警告】registry.yaml 不存在，Level 2 匹配已跳过"}), file=sys.stderr)
+    except Exception as e:
+        print(json.dumps({"systemMessage": f"【万魂幡警告】加载 registry 失败: {e}"}), file=sys.stderr)
+    return []
 
 
 def check_level1(prompt: str) -> str | None:
@@ -156,11 +158,12 @@ def main():
     # 三级递进匹配
     soul_names = load_soul_names()
 
-    for check_fn, level_name in [
-        (check_level1, "一级·命令词"),
-        (lambda p: check_level2(p, soul_names), "二级·魂名+视角"),
-        (check_level3, "三级·场景关键词"),
-    ]:
+    checks = [(check_level1, "一级·命令词")]
+    if soul_names:
+        checks.append((lambda p: check_level2(p, soul_names), "二级·魂名+视角"))
+    checks.append((check_level3, "三级·场景关键词"))
+
+    for check_fn, level_name in checks:
         result = check_fn(user_prompt)
         if result:
             msg = build_system_message(f"[{level_name}] {result}")
