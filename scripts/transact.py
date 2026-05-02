@@ -724,11 +724,7 @@ if __name__ == "__main__":
         obsidian_batch = kw.get("obsidian_batch")
         obsidian_stdin = kw.get("obsidian_stdin", False)
         if "obsidian_content" in kw:
-            try:
-                with open(kw["obsidian_content"]) as f:
-                    obsidian_content = f.read()
-            except Exception as e:
-                print(f"⚠ 无法读取 obsidian-content 文件: {e}")
+            obsidian_content = kw["obsidian_content"]  # pass path, not content — cmd_possession_close handles reading
         sys.exit(cmd_possession_close(
             pos[0],
             mode=kw["mode"],

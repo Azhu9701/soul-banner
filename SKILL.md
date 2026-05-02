@@ -95,7 +95,7 @@ soul-banner/
 ```bash
 python3 scripts/soul-search.py "{人物名}" -o raw/{人物名}/
 ```
-反检测：每次搜索间隔 2-4s 随机延迟，引擎间 5s+，模拟滚动。若 tmwd-bridge 不可用，回退到 `byted-web-search` 或 `WebSearch`。
+反检测：每次搜索间隔 2-4s 随机延迟，引擎间 5s+，模拟滚动。若 tmwd-bridge 不可用，回退到内置 **WebSearch + WebFetch**（免费，零配置），或可选 `byted-web-search`（需火山引擎账号，个人每月 500 次免费额度）。
 
 **收魂双轨**：tmwd-bridge（交互式真实浏览器，处理搜索交互）与 agent-browser（程序化无头浏览器，处理 JS 渲染/登录/翻页的批量抓取）互补。使用 agent-browser 后端：
 ```bash
@@ -359,7 +359,55 @@ python3 scripts/prompt-audit.py \
 
 按需加载：**[CLAUDE.md](CLAUDE.md)**（法旨层常驻指令+Task模板+Skill集成规则）、**[auto-possess.md](auto-possess.md)**（附体机制+审查板块+五模式+散魂仪式）、**[soul-profile-format.md](soul-profile-format.md)**（品级标准+金魂冻结+轮值细则+魂补丁系统）、**[references/马斯克.yaml](references/马斯克.yaml)**（紫魂示例）、**souls/{魂名}.yaml**（魂魄档案）、**registry.yaml**（总册）、**registry-lite.yaml**（匹配速查表，~6KB，自动生成）、**scripts/soul-search.py**（收魂搜索+媒体链接检测+双引擎）、**scripts/soul-banner-hook.py**（Hook）、**scripts/prompt-audit.py**（审计日志）、**scripts/cross-validate.py**（三方交叉校验）、**scripts/cross-model-verify.py**（跨底模验证）、**scripts/registry-health-check.py**（健康检查+零召唤推荐）、**scripts/generate-registry-lite.py**（生成匹配速查表）、**scripts/maintenance-loop.sh**（运维自动化）、**agents/{审查官}.md**、**agents/{辩证综合官}.md**
 
-**集成外部 Skill**：`markitdown`（收魂格式转换）、`humanizer`（去 AI 痕迹）、`agent-browser`（收魂双轨备选）、`graphify`（审查知识图谱）、`loop`（周期性运维）
+**集成外部 Skill**：`markitdown`（收魂格式转换，免费开源）、`humanizer`（去 AI 痕迹，纯 LLM 无外部 API）、`agent-browser`（收魂双轨备选，免费开源）、`graphify`（审查知识图谱，可选，免费）、`loop`（周期性运维，内置免费）
+
+---
+
+## 免费使用指南
+
+万魂幡设计为**零额外费用**可运行。所有核心功能均使用免费工具，可选付费服务仅作为优化项。
+
+### 默认免费方案（开箱即用）
+
+| 功能 | 免费方案 | 说明 |
+|------|---------|------|
+| 收魂搜索 | **WebSearch + WebFetch**（Claude Code 内置） | 零配置，直接可用 |
+| 格式转换 | **markitdown** | 开源，本地运行 |
+| 去 AI 痕迹 | **humanizer** | 纯 LLM，无外部 API |
+| 知识图谱 | **graphify** | 纯 LLM，无需外部 API |
+| 运维自动化 | **loop** | Claude Code 内置 |
+
+### 可选升级（提升体验，均免费开源）
+
+| 工具 | 效果 | 安装 |
+|------|------|------|
+| **tmwd-bridge** | 真实 Chrome 多引擎搜索（保留登录态、反检测） | `git clone https://github.com/lsdefine/GenericAgent ~/GenericAgent` + Chrome 扩展 |
+| **agent-browser** | 无头浏览器，JS 渲染页面抓取 | `npm install -g agent-browser` |
+| **Obsidian** | 本地知识库存档 | 官网免费下载 |
+
+### 可选付费（非必需）
+
+| 服务 | 用途 | 费用 | 替代 |
+|------|------|------|------|
+| 火山引擎联网搜索 | 搜索 API | 每月 500 次免费，超出付费 | WebSearch（免费） |
+| Kimi K2.6 (Moonshot) | graphify 语义提取加速 | 按量付费 | Claude 内置（免费） |
+
+### 穷哥们快速上手
+
+```bash
+# 零配置启动：直接用内置 WebSearch 收魂
+/soul-banner 收魂 毛泽东     # 主 agent 自动用 WebSearch + WebFetch
+
+# 更好的体验：安装 tmwd-bridge（一次性）
+git clone https://github.com/lsdefine/GenericAgent ~/GenericAgent
+# Chrome 安装 GenericAgent 扩展 → 完成
+```
+
+**结论**：万魂幡的所有核心功能（收魂、炼化、审查、附体、合议）在零额外费用下完整可用。
+
+---
+
+*「幡动魂自至。以幡择魂，以魂择事，事至则魂附，事毕则魂归。幡主持幡，魂不越界。」*
 
 ---
 

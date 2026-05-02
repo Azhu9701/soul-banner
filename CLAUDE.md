@@ -21,12 +21,12 @@
 
 **匹配审查轻量化**（三步）：
 
-1. **预筛选**：主 agent 运行 `python3 scripts/match.py "任务描述"` 做关键词/场景/排除评分，输出首选+备选+排除清单。
+1. **预筛选**：主 agent 运行 `python3 scripts/match.py "任务描述" --no-gold-review` 做关键词/场景/排除评分，输出首选+备选+排除清单。`--no-gold-review` 省略 gold_review 字段，节省 ~1,500 tokens。
 2. **幡主审查**：主 agent 将两份内容注入幡主 prompt：
    - `match.py` 预筛选结果（当前任务匹配详情）
    - `committee/handbook.md`（历史匹配经验，由 `generate-handbook.py` 自动生成，~270 tokens）
    
-   幡主**不再读 registry-lite.yaml**（省 ~3,500 tokens），按结构化清单回答：领域匹配 / 排除风险 / 边界风险 / 裁决。
+   **幡主审查阶段硬性禁读**：幡主必须仅基于 prompt 中已注入的预筛选结果和 handbook 做判断，**禁止读取任何文件**（包括 registry.yaml、registry-lite.yaml、魂 YAML、call-records.yaml）。按结构化清单回答：领域匹配 / 排除风险 / 边界风险 / 裁决。
 3. **深度审查**：匹配通过后，幡主才读完整魂 YAML 做深度审查。
 
 **手册更新**：每次附体落盘后（`transact.py possession-close`），主 agent 运行 `python3 scripts/generate-handbook.py -o committee/handbook.md --compact` 更新手册。手册约 270 tokens，自动从 `call-records.yaml` 提取魂效能统计+失败模式+零召唤预警。
@@ -37,7 +37,7 @@
 
 ## Skill 集成规则
 
-### markitdown — 收魂格式转换
+### markitdown — 收魂格式转换（免费开源）
 
 收魂步骤 4 自动生成 `raw/{魂名}/媒体链接.md`。步骤 5 由主 agent 对每个链接调用 markitdown：
 ```
@@ -45,7 +45,7 @@
 ```
 转换素材纳入炼化阶段的读取范围。
 
-### humanizer — 去 AI 痕迹
+### humanizer — 去 AI 痕迹（免费，纯 LLM，无外部 API）
 
 触发点两处：
 1. **炼化后**：Soul Profile 生成后，调用 `Skill("humanizer")` 处理 mind/voice/summon_prompt 字段
@@ -53,19 +53,32 @@
 
 **硬性约束**：不同魂的语言风格必须保持差异。humanizer 指令必须包含该魂 voice 字段的风格保留声明。禁止用 humanizer 统一所有魂的语言风格。
 
-### agent-browser — 收魂双轨
+### 收魂搜索回退链（全部免费）
 
-tmwd-bridge 不可用时，回退至 agent-browser：
+收魂搜索按优先级回退，所有方案均为免费：
+
+1. **tmwd-bridge**（推荐）— 真实 Chrome 多引擎搜索，保留登录态，反检测。需安装 [GenericAgent](https://github.com/lsdefine/GenericAgent) Chrome 扩展
+2. **WebSearch + WebFetch**（内置，零配置）— Claude Code 内置搜索和抓取工具，tmwd-bridge 不可用时的首选回退
+3. **agent-browser**（免费开源）— 无头浏览器，JS 渲染页面批量抓取。安装：`npm install -g agent-browser`
+
 ```bash
+# tmwd-bridge（默认）
+python3 scripts/soul-search.py "{人物名}" -o raw/{人物名}/
+
+# 内置 WebSearch/WebFetch（零配置回退）
+# 主 agent 直接调用 WebSearch + WebFetch 逐维度搜索
+
+# agent-browser（备选）
 python3 scripts/soul-search.py "{人物名}" --engine agent-browser -o raw/{人物名}/
 ```
-agent-browser 适用于 JS 渲染页面的批量抓取，与 tmwd-bridge（交互式搜索）互补。
 
-### graphify — 审查知识图谱
+可选付费：火山引擎联网搜索 API（每月 500 次免费额度，超出付费），仅在以上方案均不可用时考虑。
+
+### graphify — 审查知识图谱（可选，免费）
 
 每次审查/互审报告保存后，调用 `Skill("graphify")` 更新知识图谱。图谱用于审查关系可视化和思想谱系追踪。非强制性——图谱损坏不影响万魂幡核心功能。
 
-### loop — 运维自动化
+### loop — 运维自动化（内置免费）
 
 **边界**：只自动化运维检查，不自动化判断行为。禁止用 loop 自动执行审查/互审/品级调整。
 
@@ -86,6 +99,20 @@ Agent(
   prompt="{任务描述}"
 )
 ```
+
+**Spawn 幡主审查专用模板**（必须严格遵循）：
+```
+Agent(
+  subagent_type="列宁",
+  description="幡主匹配审查",
+  prompt="匹配预筛选结果：
+{match.py --no-gold-review 的完整输出}
+
+---
+禁止读取任何文件。仅基于以上预筛选结果和已知的魂领域知识做判断。按清单回答：领域匹配 / 排除风险 / 边界风险 / 裁决。"
+)
+```
+审查 prompt 中必须包含「**禁止读取任何文件**」，且预筛选结果使用 `--no-gold-review` 精简版。
 
 ### 事务脚本（transact.py）— 落盘自动化
 

@@ -110,24 +110,56 @@ def keyword_overlap(task_tokens, keyword_text, all_soul_keywords=None):
     return result_list, score
 
 def exclude_check(task_lower, exclude_text):
-    """检查排除条件是否触发"""
+    """检查排除条件是否触发。两级排除：
+    - hard: 排除词精确命中任务核心（子串匹配 + 词长>=3）→ ×0.1
+    - soft: 模糊匹配或短词匹配 → ×0.5
+    """
     if not exclude_text:
         return [], "none"
 
     excludes = [e.strip() for e in re.split(r'[、,，/]', exclude_text) if e.strip()]
-    triggered = []
+    hard_triggered = []
+    soft_triggered = []
+    task_tokens_lower = set(t.lower() for t in tokenize(task_lower))
+
     for ex in excludes:
         ex_lower = ex.lower()
+        ex_tokens = tokenize(ex_lower)
+        ex_len = len(ex)
+
+        # 精确子串匹配——是核心排除信号
         if ex_lower in task_lower:
-            triggered.append(ex)
-        else:
-            # 部分匹配
-            ex_tokens = tokenize(ex_lower)
-            task_tokens_lower = set(t.lower() for t in tokenize(task_lower))
+            # 长词精确命中 = hard（如"纯财务会计准则合规"命中任务）
+            if ex_len >= 4:
+                hard_triggered.append(ex)
+            # 中词精确命中 = hard，除非是明显的附属提及
+            elif ex_len >= 3:
+                # 检查排除词是否在任务中处于附属位置（括号内、"包括"/"如"/"除"后）
+                idx = task_lower.find(ex_lower)
+                context_before = task_lower[max(0, idx - 10):idx]
+                is_subordinate = any(marker in context_before for marker in ['包括', '例如', '比如', '除了', '除', '附带', '此外', '以及'])
+                if is_subordinate:
+                    soft_triggered.append(f"{ex}~")
+                else:
+                    hard_triggered.append(ex)
+            else:
+                # 2字词精确命中 → soft（短词太容易误伤）
+                soft_triggered.append(f"{ex}~")
+            continue
+
+        # 模糊匹配（token overlap >= 50%）→ soft
+        if len(ex_tokens) >= 2:
             overlap = ex_tokens & task_tokens_lower
-            if len(overlap) >= len(ex_tokens) * 0.5 and len(ex_tokens) >= 2:
-                triggered.append(f"{ex}?")
-    return triggered, "high" if triggered else "none"
+            if len(overlap) >= len(ex_tokens) * 0.5:
+                soft_triggered.append(f"{ex}?")
+
+    # 返回最高风险级别
+    all_triggered = hard_triggered + soft_triggered
+    if hard_triggered:
+        return all_triggered, "hard"
+    elif soft_triggered:
+        return all_triggered, "soft"
+    return [], "none"
 
 def score_soul(soul, task):
     """对单个魂评分，返回 (score, details)"""
@@ -173,9 +205,11 @@ def score_soul(soul, task):
         details["domain_bonus"]
     )
 
-    # 排除惩罚
-    if ex_risk == "high":
-        score *= 0.1  # 严重惩罚但不归零（幡主可能有特殊判断）
+    # 排除惩罚（两级）
+    if ex_risk == "hard":
+        score *= 0.1
+    elif ex_risk == "soft":
+        score *= 0.5
 
     # 金魂轻微加权（倾向于选择有方向判断能力的魂）
     if soul.get("grade") == "金":
@@ -199,7 +233,8 @@ def format_output(results, task, show_gold_review=True):
         lines.append(f"**{p['name']}** ({p['grade']}魂) — 匹配分 {p['score']:.2f}")
         lines.append(f"- 触发关键词: {', '.join(p['keyword_matches'][:8]) or '无'}")
         lines.append(f"- 触发场景: {', '.join(p['scenario_matches'][:5]) or '无'}")
-        lines.append(f"- 排除风险: {p['exclude_risk']} {p['exclude_triggered'] if p['exclude_triggered'] else ''}")
+        risk_label = {"none":"无","soft":"软排除","hard":"硬排除"}.get(p['exclude_risk'], p['exclude_risk'])
+        lines.append(f"- 排除风险: {risk_label} {p['exclude_triggered'] if p['exclude_triggered'] else ''}")
         lines.append(f"- 领域: {', '.join(p.get('domain', []))}")
         if show_gold_review and p.get("gold_review"):
             lines.append(f"- Gold Review: {p['gold_review'][:200]}")
@@ -211,12 +246,19 @@ def format_output(results, task, show_gold_review=True):
             lines.append(f"{i+1}. **{a['name']}** ({a['grade']}魂, {a['score']:.2f}) — {', '.join(a['keyword_matches'][:4]) or '无关键词命中'}")
         lines.append("")
 
-    # 排除清单
-    high_exclude = [r for r in results if r["exclude_risk"] == "high"]
-    if high_exclude:
-        lines.append("### 排除预警\n")
-        for e in high_exclude:
+    # 排除清单（区分硬排除和软排除）
+    hard_exclude = [r for r in results if r["exclude_risk"] == "hard"]
+    soft_exclude = [r for r in results if r["exclude_risk"] == "soft"]
+    if hard_exclude:
+        lines.append("### 硬排除预警\n")
+        for e in hard_exclude:
             lines.append(f"- **{e['name']}**: 排除词命中 → {', '.join(e['exclude_triggered'][:5])}")
+        lines.append("")
+    if soft_exclude:
+        lines.append("### 软排除提示\n")
+        for e in soft_exclude:
+            suffix = "~" if any(t.endswith("~") for t in e.get("exclude_triggered", [])) else ""
+            lines.append(f"- **{e['name']}** (评分 ×0.5): {', '.join(e['exclude_triggered'][:5])}")
         lines.append("")
 
     # 结构化审查清单
@@ -255,7 +297,7 @@ def main():
     scored = []
     for soul in active_souls:
         score, details = score_soul(soul, task)
-        if score > 0 or details["exclude_risk"] == "high":
+        if score > 0 or details["exclude_risk"] in ("hard", "soft"):
             scored.append({
                 "name": soul.get("name", ""),
                 "grade": soul.get("grade", "?"),
@@ -267,8 +309,9 @@ def main():
             })
 
     # 排序：排除风险低的优先，同风险按分数
+    risk_order = {"none": 0, "soft": 1, "hard": 2}
     scored.sort(key=lambda x: (
-        1 if x["exclude_risk"] == "high" else 0,
+        risk_order.get(x["exclude_risk"], 0),
         -x["score"]
     ))
     top_results = scored[:top_n]
