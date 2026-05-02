@@ -319,10 +319,11 @@ python3 scripts/prompt-audit.py \
 
 ## 管理
 
-- **查看**：读 `registry.yaml`
-- **散魂**：删除 `souls/{魂名}.yaml`，更新 `registry.yaml`，保留 `raw/` 素材
+- **查看**：读 `registry.yaml`（完整档案）或 `registry-lite.yaml`（匹配速查，~6KB）
+- **散魂**：删除 `souls/{魂名}.yaml`，更新 `registry.yaml`，重新生成 `registry-lite.yaml`，保留 `raw/` 素材
 - **升级**：重新收魂 → 炼化 → 审查 → 覆盖原档案
 - **健康检查**：每次新会话启动时运行 `python3 scripts/registry-health-check.py --last-run`，随后运行 `python3 scripts/cross-validate.py` 做三方交叉校验。如有错误执行 `--fix` 自动修复。
+- **匹配审查轻量化**：匹配审查只读 `registry-lite.yaml`（~6KB），不读完整 `registry.yaml`（~29KB）。`registry-lite.yaml` 由 `python3 scripts/generate-registry-lite.py -o registry-lite.yaml` 从 `registry.yaml` 生成。每次 `registry.yaml` 更新后必须重新生成。
 - **markitdown 转换**：收魂后，对 `raw/{魂名}/媒体链接.md` 中的每个链接调用 `Skill("markitdown")`
 - **humanizer 处理**：炼化生成 Soul Profile 后 + 附体魂输出后，调用 `Skill("humanizer")`，须传入风格保留指令
 - **graphify 更新**：审查/互审报告保存后，调用 `Skill("graphify")` 更新知识图谱
@@ -349,7 +350,7 @@ python3 scripts/prompt-audit.py \
 
 ## 参考资源
 
-按需加载：**[CLAUDE.md](CLAUDE.md)**（法旨层常驻指令+Task模板+Skill集成规则）、**[auto-possess.md](auto-possess.md)**（附体机制+审查板块+五模式+散魂仪式）、**[soul-profile-format.md](soul-profile-format.md)**（品级标准+金魂冻结+轮值细则+魂补丁系统）、**[references/马斯克.yaml](references/马斯克.yaml)**（紫魂示例）、**souls/{魂名}.yaml**（魂魄档案）、**registry.yaml**（总册）、**scripts/soul-search.py**（收魂搜索+媒体链接检测+双引擎）、**scripts/soul-banner-hook.py**（Hook）、**scripts/prompt-audit.py**（审计日志）、**scripts/cross-validate.py**（三方交叉校验）、**scripts/cross-model-verify.py**（跨底模验证）、**scripts/registry-health-check.py**（健康检查+零召唤推荐）、**scripts/maintenance-loop.sh**（运维自动化）、**agents/{审查官}.md**、**agents/{辩证综合官}.md**
+按需加载：**[CLAUDE.md](CLAUDE.md)**（法旨层常驻指令+Task模板+Skill集成规则）、**[auto-possess.md](auto-possess.md)**（附体机制+审查板块+五模式+散魂仪式）、**[soul-profile-format.md](soul-profile-format.md)**（品级标准+金魂冻结+轮值细则+魂补丁系统）、**[references/马斯克.yaml](references/马斯克.yaml)**（紫魂示例）、**souls/{魂名}.yaml**（魂魄档案）、**registry.yaml**（总册）、**registry-lite.yaml**（匹配速查表，~6KB，自动生成）、**scripts/soul-search.py**（收魂搜索+媒体链接检测+双引擎）、**scripts/soul-banner-hook.py**（Hook）、**scripts/prompt-audit.py**（审计日志）、**scripts/cross-validate.py**（三方交叉校验）、**scripts/cross-model-verify.py**（跨底模验证）、**scripts/registry-health-check.py**（健康检查+零召唤推荐）、**scripts/generate-registry-lite.py**（生成匹配速查表）、**scripts/maintenance-loop.sh**（运维自动化）、**agents/{审查官}.md**、**agents/{辩证综合官}.md**
 
 **集成外部 Skill**：`markitdown`（收魂格式转换）、`humanizer`（去 AI 痕迹）、`agent-browser`（收魂双轨备选）、`graphify`（审查知识图谱）、`loop`（周期性运维）
 

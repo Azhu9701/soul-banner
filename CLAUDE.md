@@ -15,9 +15,11 @@
 
 **Task 追踪**：多步骤仪轨启动时，主 agent 必须用 `TaskCreate` 创建全部步骤，完成后确认全部 Task 为 `completed`。具体模板详见 **[tasks.md](tasks.md)**（按需加载，启动时不读取）。
 
-**魂魄 agent 文件**：常用魂在 `~/.claude/agents/{魂名}.md` 有标准化 agent 定义（含 summon_prompt、tools、model）。当前已入驻：列宁、毛泽东、费曼、鲁迅、未明子、邓小平。spawn 魂时直接使用 `subagent_type="{魂名}"`。
+**魂魄 agent 文件**：常用魂在 `~/.claude/agents/{魂名}.md` 有标准化 agent 定义（含 summon_prompt、tools、model）。当前已入驻：列宁、毛泽东、费曼、鲁迅、未明子、邓小平、海绵宝宝。spawn 魂时直接使用 `subagent_type="{魂名}"`。
 
 **审查 spawn**：新魂入幡审查和附体前匹配审查，spawn `subagent_type="幡主审查官"`。用户需在 `agents/` 目录下创建对应的 agent 定义文件，注入幡主的 summon_prompt 和三模式审查职责（匹配审查/品级审查/金魂互审）。
+
+**匹配审查轻量化**：匹配审查时审查官**只读 `registry-lite.yaml`**（~6KB，仅含 name/grade/domain/trigger/exclude），不读完整 `registry.yaml`（~29KB）。匹配通过后才读完整魂 YAML 做深度审查。`registry-lite.yaml` 由 `scripts/generate-registry-lite.py` 从 `registry.yaml` 自动生成。每次 `registry.yaml` 更新后主 agent 须重新生成：`python3 scripts/generate-registry-lite.py -o registry-lite.yaml`。
 
 **辩证综合 spawn**：合议模式阶段二，spawn `subagent_type="辩证综合官"`。该 agent 定义了五步综合法（共识/分歧/盲区/主要矛盾/行动纲领）。
 
