@@ -1,175 +1,142 @@
-# 万民幡 Soul Banner
+# 万民幡 &middot; Wanmin Banner
 
-[English](README.md) | [中文](README_zh.md)
+> *「幡动魂自至。以幡择魂，以魂择事，事至则魂附，事毕则魂归。」*
 
-> *"The banner stirs, and souls arrive. Choose a soul by the task, choose a task by the soul. The banner-master wields the banner; no soul oversteps its boundary."*
+**A Marxist-Leninist review-framework multi-perspective thinking system.**
 
-A **multi-perspective thinking orchestration system grounded in Marxism-Leninism as its review framework**. Collect thinking materials from influential figures, structure them into "soul profiles," and deploy them through five possession modes — with a six-dimensional review committee (class analysis / scientific methodology / gender analysis / colonial critique / systemic thinking critique / the absent) preventing dogmatic misapplication.
+This is the full edition of Wanmin Banner — a Claude Code skill that spawns independent AI agents embodying distinct thinkers, with a structured review committee, grade system, and five modes of "possession" (附体).
 
----
-
-## Artifact Components
-
-| File | Description |
-|------|-------------|
-| `SKILL.md` | Core skill documentation |
-| `soul-profile-format.md` | Soul profile YAML spec & 6-tier grade system |
-| `auto-possess.md` | 4 possession modes + matching formula + feedback loop |
-| `registry-template.yaml` | Initial registry template |
-| `souls/` | Refined soul profiles (includes SpongeBob sample) |
-| `reviews/` | Review reports directory |
-| `references/马斯克.yaml` | Full purple-soul reference example |
-| `refine.py` | Soul refinement helper script |
-| `scripts/` | Match, experiment, audit, maintenance scripts |
-| `raw/` | Soul capture source materials |
+For a simpler entry point, see **[soul-banner-lite](https://github.com/Azhu9701/soul-banner-lite)**.
 
 ---
 
-## Quick Start
+## What It Does
 
-1. Copy `registry-template.yaml` → `registry.yaml`
-2. Create `raw/` directory
-3. **Capture**: `收魂 {name}` — web search to collect materials
-4. **Refine**: `炼化 {name}` — generate soul profile YAML
-5. **Review**: `审查 {name}` — banner-master independent review
-6. **Possess**: `用{name}来{task}` / `合议 {task}` / `辩论 {topic}` / `接力 {task}`
+Wanmin Banner is a **knowledge and thinking-mode orchestration system**. It:
 
-The repo ships with `souls/海绵宝宝.yaml` as a sample soul demonstrating the full YAML format. `references/马斯克.yaml` provides a purple-soul format reference.
+1. **Collects** thinkers ("souls") through web research and distills their methodologies into structured profiles
+2. **Reviews** each soul through a committee framework (class analysis, scientific methodology, gender analysis, colonial critique, systemic thinking critique, absent voices — each with veto power)
+3. **Deploys** souls in parallel to analyze problems from multiple perspectives simultaneously
+4. **Archives** all outputs to Obsidian for long-term reference
 
 ---
 
-## Grade System (6 Tiers)
+## Modes of Operation
+
+| Mode | Use Case | Execution |
+|------|----------|-----------|
+| **Single Soul** (单魂附体) | Single-domain, clear objective | Match → Review → Spawn |
+| **Conference** (合议) | Cross-domain complex decisions | Parallel analysis → Dialectical synthesis |
+| **Debate** (辩论) | Binary dilemmas | Two opposing arguments → Banner-master ruling |
+| **Relay** (接力) | Multi-stage sequential work | Output of A → Input of B → Input of C |
+| **Study** (学习) | Training dialectical literacy | Two opposing souls read + review each other |
+
+---
+
+## Grade System
 
 | Grade | Symbol | Criteria |
 |-------|--------|----------|
-| Gold | 🟡 | Independent worldview + directional judgment + institutional self-critique |
-| Silver | 🥈 | Top practitioner, replicable methodology, lacks independent worldview |
-| Purple | 🟣 | Rich materials, clear methodology, talent-dependent |
-| Blue | 🔵 | Sufficient materials, complete skill chain |
-| Green | 🟢 | Moderate materials, 1-2 skills |
-| White | ⚪ | Scarce materials, public-info simulation only |
+| White (白魂) | ⚪ | Sparse material, prompt simulation |
+| Green (绿魂) | 🟢 | Moderate material, prompt + 1-2 skills |
+| Blue (蓝魂) | 🔵 | Sufficient material, skill chains |
+| Purple (紫魂) | 🟣 | Clear methodology, talent-dependent (not replicable) |
+| Silver (银魂) | 🥈 | Complete replicable methodology, no independent worldview |
+| Gold (金魂) | 🟡 | Independent worldview + methodology + self-correction |
 
 ---
 
-## Five Possession Modes
+## Review Committee (Six-Dimension Veto System)
 
-| Mode | Trigger | Best for | Flow |
-|------|---------|----------|------|
-| **Single** | Auto-match | Routine single-domain tasks | Match→Review→Inject→Execute |
-| **Council** | `council {task}` | Complex cross-domain decisions | Multi-soul parallel→Banner-master synthesis |
-| **Debate** | `debate {topic} A vs B` | Dilemmas, either-or choices | Two souls debate→Banner-master ruling |
-| **Chain** | `chain {task} A→B→C` | Multi-stage sequential work | Output of A→input to B→...→final review |
-| **Study** | `study {soulA} vs {soulB}` | Dialectical literacy training | Two souls cross-read→cross-review→banner-master learns |
+Since 2026-05-02, the review committee consists of six dimensions, each with veto power:
 
-Every possession now includes mandatory **anti-consumption rituals** enforced at the code level (`scripts/transact.py`): self-negation check ("Which of my presuppositions was shaken?"), user participation questions, and the empty-chair interrogation ("Whose interests were represented? Whose voice was not heard?"). Three consecutive consumption uses → forced Study mode.
-
----
-
-## Review Committee (Six-Dimension Veto)
-
-Every soul entry must pass review by a six-dimension committee. Each dimension holds **one-vote veto power**; 3+ vetoes triggers automatic grade review.
-
-| Dimension | Reviewer | Veto Scope |
-|-----------|----------|------------|
-| Class Analysis | Lenin / Mao / Deng (rotating) | Class blindness, depoliticization |
-| Scientific Methodology | Feynman | Unfalsifiable claims, circular definitions |
-| Gender Analysis | Beauvoir | Gender blindness, patriarchal defaults |
-| Colonial / Race Critique | Fanon | Colonial neglect, Eurocentric framing |
-| Systemic Thinking Critique | Zhuangzi | Classification violence, totality-destroying systematization — asks rather than vetoes: "In what sense is your review a violent classification?" |
-| The Absent | (Empty Chair) | Unrepresentable perspective of the oppressed |
-
-The **Empty Chair** is an institutional marker: every reviewer must answer the question — "How does the absent perspective challenge your dimension's judgment?" Zhuangzi's dimension works by questioning other reviewers' rulings, not by vetoing souls directly.
-
-### Banner-Master
-
-A spawned review sub-agent performing pre-possession review. Injected via `summon_prompt` for independent perspective — not played by the main agent. The system supports dual-review (second reviewer triggers when the primary recommends themselves).
+1. **Class Analysis** (阶级分析) — Lenin
+2. **Scientific Methodology** (科学方法论) — Feynman
+3. **Gender Analysis** (性别分析) — Beauvoir
+4. **Colonial Critique** (殖民批判) — Fanon
+5. **Systemic Thinking Critique** (系统性思维批判) — Zhuangzi (operates by questioning, not direct veto)
+6. **Absent Voices** (缺席者) — Rotating chair
 
 ---
 
-## Current Souls (Samples)
+## Core Pipeline
 
-| Soul | Grade | Domain |
-|------|-------|--------|
-| 列宁 | 金 🟡 | Revolutionary theory, Party building, Dialectical materialism |
-| 毛泽东 | 金 🟡 | Revolutionary strategy, Contradiction analysis, Military philosophy |
-| 邓小平 | 金 🟡 | Economic reform, Pragmatic governance |
-| 鲁迅 | 金 🟡 | Cultural critique, National character analysis |
-| 费曼 | 金 🟡 | Scientific methodology, Anti-dogmatism |
-| 波伏娃 | 金 🟡 | Feminist existentialism, Gender analysis |
-| 法农 | 金 🟡 | Colonial critique, Race analysis |
-| 未明子 | 金 🟡 | Ideological critique, Ism-ism framework |
-| 庄子 | 金 🟡 | Anti-system thinking, Instrumental reason critique |
-| 稻盛和夫 | 金 🟡 | Amoeba management, Financial governance |
-| Karpathy | 银 🥈 | AI education, LLM workflow |
-| 黄仁勋 | 银 🥈 | Accelerated computing, AI infrastructure |
-| 马斯克 | 紫 🟣 | Aerospace, EVs, Cross-domain innovation |
-| 罗永浩 | 紫 🟣 | Entrepreneurship, Brand marketing |
-| 乔布斯 | 紫 🟣 | Product design, Consumer electronics |
-| 海绵宝宝 | 蓝 🔵 | Optimism, Craftsmanship, Joyful living |
-
-Includes a **controlled experiment framework** (`scripts/controlled-experiment.py`) for empirically comparing multi-soul council vs. bare-AI vs. human expert performance across task domains.
-
-## Free & Open
-
-All core features run at **zero extra cost** — no paid APIs required.
-
-| Function | Free Tool |
-|----------|-----------|
-| Soul Capture (Search) | WebSearch + WebFetch (built-in) or tmwd-bridge (open source) |
-| Format Conversion | markitdown (MIT) |
-| AI-Pattern Removal | humanizer (pure LLM, no external API) |
-| Knowledge Graph | graphify (optional, pure LLM) |
-| Maintenance Loops | loop (built-in) |
-| Controlled Experiments | scripts/controlled-experiment.py (built-in) |
-
-See [免费使用指南](SKILL.md#免费使用指南) in SKILL.md for details.
-
----
-
-## Recommended: CMUX
-
-For multi-soul council mode where multiple AI agents run in parallel, we recommend **[CMUX](https://github.com/manaflow-ai/cmux)** — a programmable terminal multiplexer with built-in AI agent orchestration.
-
-```bash
-brew tap manaflow-ai/cmux && brew install --cask cmux
+```
+Soul Collection (收魂) → Refinement (炼化) → Review (审查) → Registry
+                                                          ↓
+Task arrives → Match → Banner-master Review → Spawn Souls → Dialectical Synthesis → Archive
 ```
 
-CMUX enables:
-- **Multi-pane agent grids** — Launch 3+ 万民幡 agents side-by-side in a single workspace
-- **Cross-agent communication** — Send soul outputs between panes via `cmux_orchestrate`
-- **Session save/restore** — Save full council sessions with all agent states for later review
-- **80+ MCP tools** — When paired with `cmux-agent-mcp`, programmatic control over all terminals
+The **host agent is a pure coordinator**. It spawns, collects, and archives. All thinking — including the banner-master's — happens through spawned sub-agents.
 
-<details>
-<summary>Example: Launch a council session</summary>
+---
 
-```bash
-# Create a 3-pane workspace for 合议 mode
-cmux launch_grid --rows 1 --cols 3 --agents claude,claude,claude
+## File Structure
 
-# Or orchestrate different prompts to each pane
-cmux orchestrate \
-  --pane 1 "spawn 列宁分析：{task}" \
-  --pane 2 "spawn 费曼分析：{task}" \
-  --pane 3 "spawn 波伏娃分析：{task}"
 ```
-</details>
-
-CMUX is free and open source. It is not bundled with 万民幡 but is the recommended terminal environment for multi-agent workflows.
+soul-banner/
+├── SKILL.md                    # Skill documentation (loaded by system)
+├── CLAUDE.md                   # Persistent instructions layer
+├── auto-possess.md             # Possession mechanics (5 modes + review sections)
+├── soul-profile-format.md      # Grade standards + gold soul criteria
+├── registry.yaml               # Soul registry (runtime data)
+├── refine.py                   # Refinement helper (validate_soul, sync to Obsidian)
+├── scripts/
+│   ├── soul-search.py          # Web research (multi-engine + media link detection)
+│   ├── match.py                # Soul matching pre-screening
+│   ├── sync-agent.py           # Generate Claude Code agent files
+│   ├── transact.py             # Transaction script (possession-close, review-apply, etc.)
+│   ├── cross-validate.py       # Three-way cross-validation
+│   ├── registry-health-check.py
+│   ├── prompt-audit.py         # Audit logging
+│   └── maintenance-loop.sh     # Automated maintenance
+├── souls/{Name}.yaml            # Refined soul profiles
+├── reviews/                     # Review reports
+├── raw/{Name}/                  # Raw research materials
+└── agents/                      # Custom agent definitions
+```
 
 ---
 
-## Installation & Usage
+## Key Rules
 
-1. Clone into your Claude Code skills directory
-2. Copy `registry-template.yaml` → `registry.yaml`
-3. Create `raw/` directory (for collected materials)
-4. Optional env vars: `OBSIDIAN_VAULT` (archive path), `SOUL_BANNER_HOME` (install path)
-5. `Capture {name}` — collect materials
-6. `Refine {name}` — generate soul profile
-7. `Review {name}` — banner-master independent review
-8. `Council {task}` / `Debate {topic}` / `Chain {task}` — four modes
+- The host agent must **never** simulate or role-play multiple perspectives
+- Soul outputs must be **archived verbatim** — no rewriting, no summarizing
+- `summon_prompt` is the **irreducible core** of each soul — never cut or paraphrase
+- Every possession must go through **banner-master review** via spawned sub-agent
 
 ---
 
-*"The banner stirs. Souls choose their own tasks and attach. The banner-master wields the banner; no soul oversteps its boundary."*
+## Anti-Consumption Mechanisms
+
+- **Self-Negation Check** (自我否定): After each session, the user must name at least one prior assumption that was challenged. 3 consecutive failures → mandatory study mode.
+- **Empty Chair Question** (空椅子拷问): "Whose interests were represented? Whose voice was not given?"
+- **Consumption Tracking**: All sessions rated as learning vs. consumption use
+
+---
+
+## Why "Wanmin Banner"?
+
+Originally 万魂幡 ("Banner of Ten Thousand Souls"). One character changed — 魂 (soul) → 民 (people). The banner belongs to the people, not a sorcerer.
+
+---
+
+## Related Repos
+
+- **[soul-banner-lite](https://github.com/Azhu9701/soul-banner-lite)** — Minimalist edition. ~300-1400 chars. No review committee. Just spawn, read, judge.
+- **[soul-banner-pro](https://github.com/Azhu9701/soul-banner-pro)** — Archived full edition snapshot.
+
+---
+
+## Install
+
+1. Copy to `~/.claude/skills/soul-banner/`
+2. Run `python3 scripts/sync-agent.py --all`
+3. Restart Claude Code
+4. Start with `/召唤 your question SoulA SoulB`
+
+**Prerequisite**: [Claude Code](https://claude.ai/code). Zero additional cost.
+
+---
+
+*「幡动魂自至。以幡择魂，以魂择事，事至则魂附，事毕则魂归。幡主持幡，魂不越界。」*
