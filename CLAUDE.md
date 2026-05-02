@@ -15,6 +15,8 @@
 
 **Task 追踪**：多步骤仪轨启动时，主 agent 必须用 `TaskCreate` 创建全部步骤，完成后确认全部 Task 为 `completed`。具体模板详见 **[tasks.md](tasks.md)**（按需加载，启动时不读取）。
 
+**Task 持久化**：创建 Task 后同步到 `committee/state.json`。合并以 id 为键。`task-restore` 只输出非完成 Task，主 agent 据此 `TaskCreate` 重建。
+
 **魂魄 agent 文件**：所有魂在 `~/.claude/agents/{魂名}.md` 有标准化 agent 定义（含 summon_prompt、tools、model），由 `scripts/sync-agent.py --all` 从 soul YAML 自动生成。**禁止手动编辑 agent 文件**——soul YAML 是唯一真相源。每次炼化/升级后必须重新同步：`python3 scripts/sync-agent.py souls/{魂名}.yaml`。spawn 魂时直接使用 `subagent_type="{魂名}"`。重启 Claude Code 后新 agent 生效。
 
 **审查 spawn**：日常匹配审查 spawn `subagent_type="列宁"`（幡主，效率优先，不轮值）。金魂互审和终末审查按轮值表 spawn 对应审查官（毛泽东/邓小平/列宁），第二审查官复核。详见 `soul-profile-format.md`「审查轮值制」。
@@ -45,8 +47,6 @@
 3. **辩证综合官**：prompt 中只给文件路径清单，自己 Read 原文。
 4. **Obsidian 存档**：manifest.json 中 `file` 字段指向 `/tmp/sb-{任务}/{魂名}.md`，`transact.py` 直接从权威副本复制到 Obsidian。
 
-**理由**：主 agent 接收魂输出后有两种篡改冲动——①传给辩证综合官时压缩以"整洁"prompt（已发现），②写 Obsidian 存档时概括以"精简"文件（已发现）。两个冲动同源：主 agent 把自己当成了编辑。用权威副本机制阻断——魂输出→立即写文件→此后只读不写。主 agent 连原文都不该"持有"在 prompt 中，收到即落盘。
-
 **辩证综合官 prompt 模板**：
 ```
 ## 任务
@@ -63,9 +63,26 @@
 请先 Read 全部文件，再做辩证综合。
 ```
 
+**⚠️ 时代背景注入（硬性）**：每个魂子 agent 的 prompt 末尾，主 agent 必须附加**时代背景卡**。魂来自不同时代（波伏娃 1949 巴黎、鲁迅 1920s 上海），他们对"当下"一无所知。
+
+**时代背景卡格式**（附在任务描述之后）：
+```
+## 时代背景
+
+你被召唤到{当前年份}年的中国。此时：
+- 互联网平台（微博、抖音、小红书、微信）是主要的公共话语空间
+- 算法推荐以互动率为核心指标，争议性内容获得不成比例的曝光
+- {与任务相关的 2-3 条当代环境说明}
+- {与任务相关的具体事件/数据，帮助魂理解当下语境}
+
+你的分析对象生活在此时此地。请在分析中注意你自身时代的局限——你可能在用 1949 年巴黎/1920 年代上海的眼光看一个你从未亲身经历的世界。
+```
+
+**原则**：背景卡不指导分析方向——只提供魂不知道的当代事实。每个魂自己决定怎么用这些信息。背景卡不超过 5 行，只放与任务直接相关的内容。
+
 ## Skill 集成规则
 
-### markitdown — 收魂格式转换（免费开源）
+### markitdown — 收魂格式转换
 
 收魂步骤 4 自动生成 `raw/{魂名}/媒体链接.md`。步骤 5 由主 agent 对每个链接调用 markitdown：
 ```
@@ -73,7 +90,7 @@
 ```
 转换素材纳入炼化阶段的读取范围。
 
-### humanizer — 去 AI 痕迹（免费，纯 LLM，无外部 API）
+### humanizer — 去 AI 痕迹
 
 触发点两处：
 1. **炼化后**：Soul Profile 生成后，调用 `Skill("humanizer")` 处理 mind/voice/summon_prompt 字段
@@ -81,32 +98,17 @@
 
 **硬性约束**：不同魂的语言风格必须保持差异。humanizer 指令必须包含该魂 voice 字段的风格保留声明。禁止用 humanizer 统一所有魂的语言风格。
 
-### 收魂搜索回退链（全部免费）
+### 收魂搜索回退链
 
-收魂搜索按优先级回退，所有方案均为免费：
+1. **tmwd-bridge**（默认）— 真实 Chrome 多引擎搜索
+2. **WebSearch + WebFetch**（回退）— 内置搜索工具
+3. **agent-browser**（备选）— 无头浏览器，JS 渲染页面抓取
 
-1. **tmwd-bridge**（推荐）— 真实 Chrome 多引擎搜索，保留登录态，反检测。需安装 [GenericAgent](https://github.com/lsdefine/GenericAgent) Chrome 扩展
-2. **WebSearch + WebFetch**（内置，零配置）— Claude Code 内置搜索和抓取工具，tmwd-bridge 不可用时的首选回退
-3. **agent-browser**（免费开源）— 无头浏览器，JS 渲染页面批量抓取。安装：`npm install -g agent-browser`
+### graphify — 审查知识图谱
 
-```bash
-# tmwd-bridge（默认）
-python3 scripts/soul-search.py "{人物名}" -o raw/{人物名}/
+审查/互审报告保存后，调用 `Skill("graphify")` 更新知识图谱。非强制性。
 
-# 内置 WebSearch/WebFetch（零配置回退）
-# 主 agent 直接调用 WebSearch + WebFetch 逐维度搜索
-
-# agent-browser（备选）
-python3 scripts/soul-search.py "{人物名}" --engine agent-browser -o raw/{人物名}/
-```
-
-可选付费：火山引擎联网搜索 API（每月 500 次免费额度，超出付费），仅在以上方案均不可用时考虑。
-
-### graphify — 审查知识图谱（可选，免费）
-
-每次审查/互审报告保存后，调用 `Skill("graphify")` 更新知识图谱。图谱用于审查关系可视化和思想谱系追踪。非强制性——图谱损坏不影响万魂幡核心功能。
-
-### loop — 运维自动化（内置免费）
+### loop — 运维自动化
 
 **边界**：只自动化运维检查，不自动化判断行为。禁止用 loop 自动执行审查/互审/品级调整。
 
@@ -154,6 +156,8 @@ Agent(
 | 审查/互审完成 | `review-apply <魂名> --review-file <路径> [--verdict "..."] [--grade X] [--reviewer X]` | `python3 scripts/transact.py review-apply 费曼 --review-file reviews/金魂互审-鲁迅审费曼-2026-05-02.md --verdict "维持金魂"` |
 | 附体结束 | `possession-close <魂名> --mode <模式> --task <任务> --effectiveness <有效\|部分有效\|无效> [--notes "..."] [--obsidian-content <文件> \| --obsidian-batch <manifest.json> \| --obsidian-stdin]` | `python3 scripts/transact.py possession-close 鲁迅 --mode 单魂 --task "组织文化诊断" --effectiveness 有效 --notes "揭露了三点自欺" --obsidian-content /tmp/output.md` |
 | 散魂 | `dismiss <魂名> [--reason "..."]` | `python3 scripts/transact.py dismiss 海绵宝宝 --reason "终末审查裁定散魂"` |
+| Task 持久化 | `task-save --tasks '<JSON>'` | `python3 scripts/transact.py task-save --tasks '[{"id":"O1","name":"收魂:xxx","status":"pending"}]'` |
+| Task 恢复 | `task-restore` | `python3 scripts/transact.py task-restore` |
 | Obsidian 同步 | `obsidian-sync [--souls X,Y] [--reviews-only] [--dry-run]` | `python3 scripts/transact.py obsidian-sync` |
 | 会议准备 | `meeting-prep` | `python3 scripts/transact.py meeting-prep` |
 | 全量同步 | `sync-all` | `python3 scripts/transact.py sync-all` |
@@ -186,17 +190,25 @@ Agent(
 
 主 agent 是**纯协作者（Coordinator）**，不是幡主、不是任何魂。主 agent 的唯一职责：
 1. **调度**：匹配魂、spawn 子 agent（含幡主审查 + 必要时第二审查官审查）、分发任务
-2. **收集**：接收所有子 agent 输出，不做实质性修改
+2. **收集**：收到魂输出立即写文件，不持有、不压缩、不改写
 3. **存档**：更新 registry.yaml、写入 Obsidian vault
 4. **所有匹配审查（含单魂）**：必须 spawn 幡主子 agent，不得自行判断
 
 除此以外的一切分析、综合、审查、裁决，均由对应魂的子 agent 完成。
 
+### 主 agent 禁止行为清单
+
+禁止：压缩/改写/重组/选择性highlight/在魂输出上加小结或总结 — 收到即落盘，此后只引用文件路径。主 agent 只传递魂/辩证综合官原文，不附加任何编辑行为。
+
+### 主 agent 呈现规范
+
+合议/辩论/接力结果报告：1) 参与信息 2) 存档路径 3) 辩证综合官/裁决官原文（全文，不编辑）。禁止主 agent 写"小结""总结""关键要点"。单魂：魂输出原文 + 存档路径。
+
 ## 正确做法
 
 调用 Skill(soul-banner) → 遵循 SKILL.md 附体流程 → 完成后核对 Task 列表全部为 completed。
 
-附体 5 步 Task 模板（详见 SKILL.md）：匹配魂 → 幡主审查 → 执行 → registry 更新 + Obsidian 存档（后两步并行）。
+附体步骤（详见 SKILL.md）：匹配魂 → 幡主审查 → 执行 → registry 更新 + Obsidian 存档（后两步并行）。附体结束报告：参与信息 → 存档位置 → 魂/辩证综合官原文。
 
 ## 启动流程
 
