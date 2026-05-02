@@ -17,7 +17,7 @@
 
 **魂魄 agent 文件**：所有魂在 `~/.claude/agents/{魂名}.md` 有标准化 agent 定义（含 summon_prompt、tools、model），由 `scripts/sync-agent.py --all` 从 soul YAML 自动生成。**禁止手动编辑 agent 文件**——soul YAML 是唯一真相源。每次炼化/升级后必须重新同步：`python3 scripts/sync-agent.py souls/{魂名}.yaml`。spawn 魂时直接使用 `subagent_type="{魂名}"`。重启 Claude Code 后新 agent 生效。
 
-**审查 spawn**：新魂入幡审查和附体前匹配审查，spawn `subagent_type="幡主审查官"`。用户需在 `agents/` 目录下创建对应的 agent 定义文件，注入幡主的 summon_prompt 和三模式审查职责（匹配审查/品级审查/金魂互审）。
+**审查 spawn**：日常匹配审查 spawn `subagent_type="列宁"`（幡主，效率优先，不轮值）。金魂互审和终末审查按轮值表 spawn 对应审查官（毛泽东/邓小平/列宁），第二审查官复核。详见 `soul-profile-format.md`「审查轮值制」。
 
 **匹配审查轻量化**：匹配审查时审查官**只读 `registry-lite.yaml`**（~6KB，仅含 name/grade/domain/trigger/exclude），不读完整 `registry.yaml`（~29KB）。匹配通过后才读完整魂 YAML 做深度审查。`registry-lite.yaml` 由 `scripts/generate-registry-lite.py` 从 `registry.yaml` 自动生成。每次 `registry.yaml` 更新后主 agent 须重新生成：`python3 scripts/generate-registry-lite.py -o registry-lite.yaml`。
 
