@@ -148,6 +148,80 @@ Agent(
 ```
 审查 prompt 中必须包含「**禁止读取任何文件**」，且预筛选结果使用 `--no-gold-review` 精简版。
 
+## cmux 可视化模式（实验性，feature/cmux-integration 分支）
+
+**状态**：实验阶段。仅在合议/辩论/接力模式的附体执行阶段使用 cmux 可视化，匹配审查和辩证综合仍使用传统 Agent spawn。
+
+**前置检查**：使用 cmux 模式前，主 agent 必须检查 cmux 是否运行：
+```
+mcp__cmux-agent-mcp__cmux_status → running: true
+```
+不可用时回退到传统 Agent spawn 模式，并在报告中注明「cmux 不可用，回退传统模式」。
+
+### cmux 附体流程（v4: Agent 调度器）
+
+**架构**：`cmux_launch_agents` 启动 N 个 Claude CLI，每个 CLI 仅做一件事 —— 调用 `Agent(subagent_type="{魂名}")` 召唤魂 agent。分析质量由魂 agent 保证，与主线一致。每 pane 约 500 token 调度开销，vs 魂分析 15K+ token。
+
+**1. 生成编排计划**：
+```bash
+python3 scripts/cmux-plan.py \
+  --task "{任务描述}" \
+  --task-slug "{slug}" \
+  --souls {魂A},{魂B},{魂C} \
+  --mode {conference|debate|relay} \
+  --era "{时代背景补充}" \
+  -o /tmp/cmux-plan.json
+```
+
+**2. 初始化文件**：
+```bash
+mkdir -p /tmp/sb-{slug}
+touch /tmp/sb-{slug}/{魂A}.md /tmp/sb-{slug}/{魂B}.md ...
+```
+
+**3. 启动 cmux Agent pane 并分发任务**：
+读 `/tmp/cmux-plan.json`，使用 `assignments` 和 `tab_names`：
+```
+cmux_launch_agents(
+  cli="claude",
+  count=N,
+  workspace_name="{workspace_name}",
+  assignments=[...],     # 来自 plan JSON（约 500 char/pane）
+  tab_names=[...],       # 来自 plan JSON
+  status={...},
+  progress=0.3,
+  progress_label="{progress_label}"
+)
+```
+每个 pane 收到调度指令 → 调用 `Agent(subagent_type="{魂名}")` → 魂 agent 分析 → 写入输出文件。
+
+**4. 监控进度**：
+```
+cmux_read_all 检查各 pane 状态
+cmux_set_status(key="{魂名}", value="写作中/已完成")
+```
+当所有 pane 报告完成，`cmux_set_progress(0.7)`。
+
+**5. 收集输出**：
+主 agent Read `/tmp/sb-{slug}/*.md` → spawn 辩证综合官（与传统模式相同）。
+
+**6. 清理**：`cmux_set_progress(1.0)`。默认保留 workspace。
+
+### cmux vs 传统模式差异
+
+| 项目 | 传统模式 | cmux v4 |
+|------|---------|---------|
+| 魂运行 | 主 agent spawn `Agent(subagent_type)` | cmux pane → `Agent(subagent_type)` |
+| summon_prompt | Agent 系统注入 | **完全一致** |
+| 分析质量 | Agent 保证 | **完全一致** |
+| 思考过程 | 不可见 | **实时可见**（pane 显示调度和文件写入确认） |
+| 额外 token | 0 | ~500/pane（调度指令） |
+| 质询 | 事后 spawn agent | 事中 `cmux_broadcast` 或 spawn agent |
+
+### 回退规则
+
+cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
+
 ### 事务脚本（transact.py）— 落盘自动化
 
 所有落盘操作统一通过 `scripts/transact.py` 子命令执行，**禁止**主 agent 手写 heredoc Python 更新文件。
