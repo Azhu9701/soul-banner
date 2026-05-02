@@ -15,7 +15,7 @@
 
 **Task 追踪**：多步骤仪轨启动时，主 agent 必须用 `TaskCreate` 创建全部步骤，完成后确认全部 Task 为 `completed`。具体模板详见 **[tasks.md](tasks.md)**（按需加载，启动时不读取）。
 
-**魂魄 agent 文件**：常用魂在 `~/.claude/agents/{魂名}.md` 有标准化 agent 定义（含 summon_prompt、tools、model）。当前已入驻：列宁、毛泽东、费曼、鲁迅、未明子、邓小平、海绵宝宝。spawn 魂时直接使用 `subagent_type="{魂名}"`。
+**魂魄 agent 文件**：所有魂在 `~/.claude/agents/{魂名}.md` 有标准化 agent 定义（含 summon_prompt、tools、model），由 `scripts/sync-agent.py --all` 从 soul YAML 自动生成。**禁止手动编辑 agent 文件**——soul YAML 是唯一真相源。每次炼化/升级后必须重新同步：`python3 scripts/sync-agent.py souls/{魂名}.yaml`。spawn 魂时直接使用 `subagent_type="{魂名}"`。重启 Claude Code 后新 agent 生效。
 
 **审查 spawn**：新魂入幡审查和附体前匹配审查，spawn `subagent_type="幡主审查官"`。用户需在 `agents/` 目录下创建对应的 agent 定义文件，注入幡主的 summon_prompt 和三模式审查职责（匹配审查/品级审查/金魂互审）。
 

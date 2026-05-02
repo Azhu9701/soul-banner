@@ -133,6 +133,12 @@ if r['errors']:
 ```
 校验不通过（valid=False）的魂魄不能入幡。
 
+**炼化后同步 agent**：校验通过后，自动生成/更新 Claude Code agent 文件：
+```bash
+python3 scripts/sync-agent.py souls/{魂名}.yaml
+```
+agent 文件写入 `~/.claude/agents/{魂名}.md`，重启 Claude Code 后即可通过 `subagent_type="{魂名}"` 直接召唤。**soul YAML 是 agent 的唯一真相源**——禁止手动编辑 agent 文件。
+
 **金魂炼化冻结**：金魂品级自 `soul-profile-format.md` 定义的三条标准判定。**自 2026-05-01 起，新金魂炼化冻结**——不再通过炼化产生新金魂。现有金魂维持不变（具体名单见 `registry.yaml`）。非金魂炼化及品级升级正常工作。此冻结由审查委员会轮值监督，解冻需委员会全员共识。详见 `soul-profile-format.md`「金魂冻结条款」。
 
 ---
@@ -321,7 +327,8 @@ python3 scripts/prompt-audit.py \
 
 - **查看**：读 `registry.yaml`（完整档案）或 `registry-lite.yaml`（匹配速查，~6KB）
 - **散魂**：删除 `souls/{魂名}.yaml`，更新 `registry.yaml`，重新生成 `registry-lite.yaml`，保留 `raw/` 素材
-- **升级**：重新收魂 → 炼化 → 审查 → 覆盖原档案
+- **升级**：重新收魂 → 炼化 → 审查 → 覆盖原档案 → **重新同步 agent**：`python3 scripts/sync-agent.py souls/{魂名}.yaml`
+- **同步 agent**：`python3 scripts/sync-agent.py --all` — 从所有 soul YAML 重新生成 agent 文件至 `~/.claude/agents/`。炼化/升级/修改 summon_prompt 后必须执行
 - **健康检查**：每次新会话启动时运行 `python3 scripts/registry-health-check.py --last-run`，随后运行 `python3 scripts/cross-validate.py` 做三方交叉校验。如有错误执行 `--fix` 自动修复。
 - **匹配审查轻量化**：匹配审查只读 `registry-lite.yaml`（~6KB），不读完整 `registry.yaml`（~29KB）。`registry-lite.yaml` 由 `python3 scripts/generate-registry-lite.py -o registry-lite.yaml` 从 `registry.yaml` 生成。每次 `registry.yaml` 更新后必须重新生成。
 - **markitdown 转换**：收魂后，对 `raw/{魂名}/媒体链接.md` 中的每个链接调用 `Skill("markitdown")`
