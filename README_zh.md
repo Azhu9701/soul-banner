@@ -76,6 +76,22 @@
 
 ---
 
+## 完全免费
+
+所有核心功能**零额外费用**可运行，无需任何付费 API。
+
+| 功能 | 免费方案 |
+|------|---------|
+| 收魂搜索 | WebSearch + WebFetch（内置）或 tmwd-bridge（开源） |
+| 格式转换 | markitdown（MIT 开源） |
+| 去 AI 痕迹 | humanizer（纯 LLM，无外部 API） |
+| 知识图谱 | graphify（可选，纯 LLM） |
+| 运维自动化 | loop（内置） |
+
+详见 SKILL.md 中的[免费使用指南](SKILL.md#免费使用指南)。
+
+---
+
 ## 安装与使用
 
 1. 将本仓库克隆到 Claude Code 的 skills 目录

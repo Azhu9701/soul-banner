@@ -76,6 +76,22 @@ The banner-master role is configurable — choose your most trusted reviewing so
 
 ---
 
+## Free & Open
+
+All core features run at **zero extra cost** — no paid APIs required.
+
+| Function | Free Tool |
+|----------|-----------|
+| Soul Capture (Search) | WebSearch + WebFetch (built-in) or tmwd-bridge (open source) |
+| Format Conversion | markitdown (MIT) |
+| AI-Pattern Removal | humanizer (pure LLM, no external API) |
+| Knowledge Graph | graphify (optional, pure LLM) |
+| Maintenance Loops | loop (built-in) |
+
+See [免费使用指南](SKILL.md#免费使用指南) in SKILL.md for details.
+
+---
+
 ## Installation & Usage
 
 1. Clone into your Claude Code skills directory
