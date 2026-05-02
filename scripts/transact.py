@@ -6,6 +6,8 @@
   review-apply     审查/互审完成后落盘（gold_review → 审查记录 → lite → 校验）
   possession-close 附体结束后落盘（call-records → audit → obsidian → lite → 校验）
   dismiss          散魂（归档YAML → 标记registry → lite → 校验）
+  task-save        持久化 Task 到 state.json（跨会话恢复）
+  task-restore     从 state.json 恢复 pending Task
   meeting-prep     会前准备（扫描失败条件 → 待办 → 输出议程模板）
   sync-all         全量同步（lite → agent --all → 校验 → 健康检查）
 
@@ -63,9 +65,7 @@ def now_iso():
 def today_str():
     return datetime.now().strftime("%Y-%m-%d")
 
-# ══════════════════════════════════════════════════════════════════
-# 共享工具
-# ══════════════════════════════════════════════════════════════════
+# -- section dividers --
 
 def run_cmd(cmd, description=""):
     """运行命令，返回 (success, output)"""
@@ -170,6 +170,12 @@ def cmd_refine_close(soul_name):
     if not existing:
         soul_data = load_yaml(yaml_path)
         soul_data.pop("召唤记录", None)
+        # 从结构化 trigger 提取 summary 字符串（registry 用 summary 做匹配，魂 YAML 用结构化格式）
+        trigger = soul_data.pop("trigger", None)
+        if trigger and isinstance(trigger, dict):
+            soul_data["trigger_keywords_summary"] = ", ".join(trigger.get("keywords", []))
+            soul_data["trigger_scenarios_summary"] = ", ".join(trigger.get("scenarios", []))
+            soul_data["trigger_exclude_summary"] = ", ".join(trigger.get("exclude", []))
         souls.append(soul_data)
         registry["魂魄"] = souls
         registry["更新时间"] = today_str()
@@ -693,6 +699,58 @@ def parse_args():
     return cmd, cleaned, kwargs
 
 
+# task save/restore
+
+def cmd_task_save(tasks_json):
+    """持久化 Task 到 state.json，合并策略：以 id 为键"""
+    try:
+        tasks = json.loads(tasks_json)
+    except json.JSONDecodeError as e:
+        print(f"❌ JSON parse error: {e}"); return 1
+    if not isinstance(tasks, list):
+        print("❌ tasks must be JSON array"); return 1
+
+    try:
+        state = load_json(STATE_PATH)
+    except FileNotFoundError:
+        state = {}
+
+    existing = {t.get("id"): t for t in state.get("pending_tasks", [])}
+    for t in tasks:
+        tid = t.get("id", "")
+        if not tid:
+            print("⚠ skip: no id"); continue
+        t["上次更新"] = today_str()
+        if "status" not in t:
+            t["status"] = "pending"
+        existing[tid] = t
+
+    state["pending_tasks"] = list(existing.values())
+    save_json(STATE_PATH, state)
+    print(f"task-save: {len(tasks)} tasks → state.json ({len(state['pending_tasks'])} total)")
+    return 0
+
+
+def cmd_task_restore():
+    """从 state.json 恢复活跃 Task"""
+    try:
+        state = load_json(STATE_PATH)
+    except FileNotFoundError:
+        print("[]"); return 0
+
+    active = [t for t in state.get("pending_tasks", [])
+              if t.get("status") not in ("已完成", "已取消")]
+    if not active:
+        print("[]"); return 0
+
+    output = [{"id": t.get("id",""), "subject": t.get("name",""),
+               "description": t.get("description", t.get("name","")),
+               "status": t.get("status","pending"), "进度": t.get("进度","")}
+              for t in active]
+    print(json.dumps(output, ensure_ascii=False, indent=2))
+    return 0
+
+
 if __name__ == "__main__":
     cmd, pos, kw = parse_args()
 
@@ -748,6 +806,16 @@ if __name__ == "__main__":
         reviews_only = kw.get("reviews_only", False)
         dry_run = kw.get("dry_run", False)
         sys.exit(cmd_obsidian_sync(souls_filter=souls_filter, reviews_only=reviews_only, dry_run=dry_run))
+
+    elif cmd == "task-save":
+        tasks_json = kw.get("tasks") or (pos[0] if pos else "")
+        if not tasks_json:
+            print("❌ 需要 --tasks '[...]' 或管道传入 JSON")
+            sys.exit(1)
+        sys.exit(cmd_task_save(tasks_json))
+
+    elif cmd == "task-restore":
+        sys.exit(cmd_task_restore())
 
     elif cmd == "meeting-prep":
         sys.exit(cmd_meeting_prep())
