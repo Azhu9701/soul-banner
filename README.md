@@ -1,4 +1,4 @@
-# 万魂幡 Soul Banner
+# 万民幡 Soul Banner
 
 [English](README.md) | [中文](README_zh.md)
 
@@ -135,7 +135,7 @@ brew tap manaflow-ai/cmux && brew install --cask cmux
 ```
 
 CMUX enables:
-- **Multi-pane agent grids** — Launch 3+ 万魂幡 agents side-by-side in a single workspace
+- **Multi-pane agent grids** — Launch 3+ 万民幡 agents side-by-side in a single workspace
 - **Cross-agent communication** — Send soul outputs between panes via `cmux_orchestrate`
 - **Session save/restore** — Save full council sessions with all agent states for later review
 - **80+ MCP tools** — When paired with `cmux-agent-mcp`, programmatic control over all terminals
@@ -155,7 +155,7 @@ cmux orchestrate \
 ```
 </details>
 
-CMUX is free and open source. It is not bundled with 万魂幡 but is the recommended terminal environment for multi-agent workflows.
+CMUX is free and open source. It is not bundled with 万民幡 but is the recommended terminal environment for multi-agent workflows.
 
 ---
 

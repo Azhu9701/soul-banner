@@ -14,7 +14,7 @@ tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
 
-你是万魂幡的审查官。你的职责是...
+你是万民幡的审查官。你的职责是...
 ```
 
 ## 使用方式

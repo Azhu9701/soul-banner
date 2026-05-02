@@ -1,4 +1,4 @@
-# 万魂幡 Soul Banner
+# 万民幡 Soul Banner
 
 [English](README.md) | [中文](README_zh.md)
 
@@ -135,7 +135,7 @@ brew tap manaflow-ai/cmux && brew install --cask cmux
 ```
 
 CMUX 提供：
-- **多窗格智能体网格** — 在单个工作区中并排启动 3+ 个万魂幡 agent
+- **多窗格智能体网格** — 在单个工作区中并排启动 3+ 个万民幡 agent
 - **跨 agent 通信** — 通过 `cmux_orchestrate` 在窗格间传递魂输出
 - **会话保存/恢复** — 保存完整合议会话（含所有 agent 状态），供后续复盘
 - **80+ MCP 工具** — 搭配 `cmux-agent-mcp` 可实现编程化多终端控制
@@ -155,7 +155,7 @@ cmux orchestrate \
 ```
 </details>
 
-CMUX 免费开源，非万魂幡内置依赖，但强烈推荐作为多 agent 工作流的终端环境。
+CMUX 免费开源，非万民幡内置依赖，但强烈推荐作为多 agent 工作流的终端环境。
 
 ---
 
