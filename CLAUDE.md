@@ -42,10 +42,11 @@
 **原则**：主 agent **禁止**用自己的话改写魂输出——无论是传给下游 agent 还是存档 Obsidian。魂输出必须是原文。
 
 **流程**：
-1. 每个魂子 agent 返回后，主 agent **立即**将其输出写入 `/tmp/sb-{任务}/{魂名}.md`。写文件时必须逐字复制 agent 返回的原文，禁止概括、压缩、改写、重新组织。
-2. `/tmp/sb-{任务}/` 下的文件是本次附体的**权威副本**——后续所有操作只读这些文件，不重新生成内容。
-3. **辩证综合官**：prompt 中只给文件路径清单，自己 Read 原文。
-4. **Obsidian 存档**：manifest.json 中 `file` 字段指向 `/tmp/sb-{任务}/{魂名}.md`，`transact.py` 直接从权威副本复制到 Obsidian。
+1. 每个魂子 agent 返回后，主 agent **立即**将其输出直接写入 Obsidian：`$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/{魂名}.md`。写文件时必须逐字复制 agent 返回的原文，禁止概括、压缩、改写、重新组织。
+2. Obsidian 路径下的文件是本次附体的**权威副本**——后续所有操作只读这些文件，不重新生成内容。
+3. **辩证综合官**：prompt 中只给 Obsidian 文件路径清单，自己 Read 原文。
+4. 若 `$OBSIDIAN_VAULT` 未配置或不可写 → 回退到 `soul-banner/archive/`。
+5. **禁止**：先写 `/tmp` 再复制、使用 `transact.py` 中转。
 
 **辩证综合官 prompt 模板**：
 ```
@@ -53,9 +54,9 @@
 {任务描述}
 
 ## 各魂分析文件（请自行 Read 每个文件获取原文）
-- /tmp/sb-{任务}/{魂A}.md
-- /tmp/sb-{任务}/{魂B}.md
-- /tmp/sb-{任务}/{魂C}.md
+- $OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/{魂A}.md
+- $OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/{魂B}.md
+- $OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/{魂C}.md
 
 ## 幡主预审约束
 {约束条件}
@@ -175,8 +176,8 @@ python3 scripts/cmux-plan.py \
 
 **2. 初始化文件**：
 ```bash
-mkdir -p /tmp/sb-{slug}
-touch /tmp/sb-{slug}/{魂A}.md /tmp/sb-{slug}/{魂B}.md ...
+mkdir -p "$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{slug}"
+touch "$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{slug}/{魂A}.md" ...
 ```
 
 **3. 启动 cmux Agent pane 并分发任务**：
@@ -203,7 +204,7 @@ cmux_set_status(key="{魂名}", value="写作中/已完成")
 当所有 pane 报告完成，`cmux_set_progress(0.7)`。
 
 **5. 收集输出**：
-主 agent Read `/tmp/sb-{slug}/*.md` → spawn 辩证综合官（与传统模式相同）。
+主 agent Read `$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{slug}/*.md` → spawn 辩证综合官（与传统模式相同）。
 
 **6. 清理**：`cmux_set_progress(1.0)`。默认保留 workspace。
 
@@ -232,10 +233,9 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 |------|--------|------|
 | 炼化完成 | `refine-close <魂名>` | `python3 scripts/transact.py refine-close 鲁迅` |
 | 审查/互审完成 | `review-apply <魂名> --review-file <路径> [--verdict "..."] [--grade X] [--reviewer X]` | `python3 scripts/transact.py review-apply 费曼 --review-file reviews/金魂互审-鲁迅审费曼-2026-05-02.md --verdict "维持金魂"` |
-| 附体结束 | `possession-close <魂名> --mode <模式> --task <任务> --effectiveness <有效\|部分有效\|无效> --self-negation "<学习性使用/消费性使用 + 说明>" --empty-chair "<空椅子回答>" [--obsidian-content <文件> \| --obsidian-batch <manifest.json> \| --obsidian-stdin]` | `python3 scripts/transact.py possession-close 鲁迅 --mode 单魂 --task "组织文化诊断" --effectiveness 有效 --self-negation "学习性使用：对团队自欺机制的理解被修正" --empty-chair "一线执行者的利益没有被组织架构代表" --obsidian-content /tmp/output.md` |
-| 附体结束（stdin） | `possession-close <魂名> ... --obsidian-stdin` | `echo "$content" \| python3 scripts/transact.py possession-close 鲁迅 ... --self-negation "..." --empty-chair "..." --obsidian-stdin` |
+| 附体结束 | `possession-close <魂名> --mode <模式> --task <任务> --effectiveness <有效\|部分有效\|无效> --self-negation "<学习性使用/消费性使用 + 说明>" --empty-chair "<空椅子回答>"` | `python3 scripts/transact.py possession-close 鲁迅 --mode 单魂 --task "组织文化诊断" --effectiveness 有效 --self-negation "学习性使用：对团队自欺机制的理解被修正" --empty-chair "一线执行者的利益没有被组织架构代表"` |
 
-**⚠️ 代码强制层**：`--self-negation` 和 `--empty-chair` 为必填参数。缺少任一参数 → transact.py 拒绝落盘（exit 1）。这是从 prompt 层提升到代码层的硬约束——不可跳过。
+**注意**：`--self-negation` 和 `--empty-chair` 推荐填写。Lite 模式下缺少时仅警告不阻止落盘，Pro 模式由 SKILL.md 强制执行。
 | 散魂 | `dismiss <魂名> [--reason "..."]` | `python3 scripts/transact.py dismiss 海绵宝宝 --reason "终末审查裁定散魂"` |
 | Task 持久化 | `task-save --tasks '<JSON>'` | `python3 scripts/transact.py task-save --tasks '[{"id":"O1","name":"收魂:xxx","status":"pending"}]'` |
 | Task 恢复 | `task-restore` | `python3 scripts/transact.py task-restore` |
@@ -247,17 +247,20 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 
 **炼化后强制校验**：`transact.py refine-close` 内部调用 `validate_soul`，valid=False 则中止。
 
-**Obsidian 存档方式**（按场景选择）：
-- **单魂**：魂输出 Write 到临时文件 → `--obsidian-content /tmp/out.md`
-- **stdin 管道**：短内容直接管道传入 → `echo "$content" | python3 scripts/transact.py possession-close ... --obsidian-stdin`
-- **多魂合议/辩论/接力**：写 manifest.json 描述 N 个文件 → `--obsidian-batch /tmp/manifest.json`。manifest 格式：
-  ```json
-  {"mode": "合议", "task": "任务名", "date": "2026-05-02", "files": [
-    {"soul": "魂A", "role": "角色", "file": "/tmp/soul-a.md"},
-    {"soul": "魂B", "role": "角色", "file": "/tmp/soul-b.md"}
-  ]}
-  ```
-- **全量同步**：`transact.py obsidian-sync` 同步全部魂魄+审查报告+委员会文档至 Obsidian（`sync-all` 已内置此步骤）
+**Obsidian 存档方式**：
+
+魂输出由主 agent 直接写入 Obsidian vault，不再经过 `/tmp` 中转或 `transact.py` 复制。`possession-close` 仅更新 registry 和 call-records。
+
+目录结构：
+```
+$OBSIDIAN_VAULT/万民幡/
+├── 单魂/{魂名}/{日期}-{任务}.md
+├── 合议/{任务}/{魂A}.md / {魂B}.md / 辩证综合.md
+├── 辩论/{议题}/{正方}.md / {反方}.md / 裁决.md
+└── 接力/{任务}/{阶段1}.md / {阶段2}.md / 衔接审查.md
+```
+
+若 `$OBSIDIAN_VAULT` 未配置 → 回退到 `soul-banner/archive/`。
 
 **目录删除检查清单**：附体任务涉及删除目录时，主 agent 在 Task 描述中必须：
 1. 逐项列出每个待删目录，说明其性质（生产依赖/开发产物/一次性实验）
@@ -299,7 +302,7 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 2. **担忧**：你担心什么？（方法、结果、盲区）
 3. **未知**：你不知道什么？哪些信息/视角是你明确缺失的？
 
-使用者的回答**不用于筛选魂**——它们用于附体结束后的自我否定对照。主 agent 将使用者的预设文字记录到 `/tmp/sb-{任务}/使用者预设.md`。
+使用者的回答**不用于筛选魂**——它们用于附体结束后的自我否定对照。主 agent 将使用者的预设文字记录到 `$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/使用者预设.md`。
 
 ### 自我否定环节（每次附体后强制）
 
