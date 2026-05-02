@@ -10,6 +10,7 @@ reviews/
 
 # 运行时数据（不入仓库）
 registry.yaml
+call-records.yaml
 assets/registry.yaml
 
 # 开发产物目录（不入仓库）

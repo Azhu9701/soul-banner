@@ -12,7 +12,7 @@ A **knowledge and thinking-pattern orchestration system**. Collect thinking mate
 
 | File | Description |
 |------|-------------|
-| `SKILL.md` / `SKILL_EN.md` | Core skill documentation (ZH/EN) |
+| `SKILL.md` | Core skill documentation |
 | `soul-profile-format.md` | Soul profile YAML spec & 6-tier grade system |
 | `auto-possess.md` | 4 possession modes + matching formula + feedback loop |
 | `registry-template.yaml` | Initial registry template |
@@ -58,6 +58,7 @@ The repo ships with `souls/海绵宝宝.yaml` as a sample soul demonstrating the
 | **Council** | `council {task}` | Complex cross-domain decisions | Multi-soul parallel→Banner-master synthesis |
 | **Debate** | `debate {topic} A vs B` | Dilemmas, either-or choices | Two souls debate→Banner-master ruling |
 | **Chain** | `chain {task} A→B→C` | Multi-stage sequential work | Output of A→input to B→...→final review |
+| **Study** | `study {soulA} vs {soulB}` | Dialectical literacy training | Two souls cross-read→cross-review→banner-master learns |
 
 All modes pass through the banner-master review. A **feedback loop** records effectiveness after each possession.
 

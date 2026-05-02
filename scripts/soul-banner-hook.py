@@ -20,7 +20,7 @@ SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 COMMAND_WORDS = [
     "合议", "辩论", "接力", "收魂", "炼化",
     "幡中有什么魂", "幡中战绩", "散魂", "审查",
-    "升级魂魄", "幡主",
+    "升级魂魄", "幡主", "学习",
 ]
 
 # === 二级：魂魄名（唯一数据源：registry.yaml） ===

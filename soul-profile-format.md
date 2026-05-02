@@ -45,6 +45,115 @@ refined_at: "YYYY-MM-DD"
 
 notes: |
   {炼化备注、审查结论}
+
+patches: []
+# 魂补丁列表。每个补丁为：
+#   - version: 1
+#     applied_at: "YYYY-MM-DD"
+#     source: "幡主学习-{学习编号}" | "审查报告-{报告文件名}" | "附体失效分析-{日期}"
+#     type: "blindspot_awareness" | "boundary_refinement" | "trigger_adjustment" | "pairing_insight"
+#     content: |
+#       {追加到运行时 summon_prompt 的自我意识文本}
+#     approved_by: "{审查官}-{裁决日期}"
+#     activation_conditions:  # 可选。不填=无条件加载（向后兼容）
+#       task_domains: ["阶级分析", "劳动权益"]  # 任务领域匹配时激活
+#       task_keywords: ["工人", "工资", "裁员"]  # 任务关键词匹配时激活
+#       # 任一条件匹配→补丁加载。全不匹配→跳过此补丁（节省 prompt token）
+#     effectiveness_tracking:
+#       monitored: true
+#       possessions_monitored: 0
+#       target_count: 5
+#       rollback_triggered: false
+#
+# 补丁类型说明：
+#   blindspot_awareness: 魂在特定条件下存在系统性盲区，附体时加载此自我限制
+#   boundary_refinement: 适用边界的微调——收紧/放宽某类场景
+#   trigger_adjustment: trigger 条件的关键词/场景/排除项调整
+#   pairing_insight: 与另一个魂搭配效果优于/差于预期的发现
+#
+# 补丁不修改源 summon_prompt，而是在附体时合并为运行时 prompt：
+#   运行时 prompt = 源 summon_prompt + 所有已批准 patches[].content
+```
+
+---
+
+## 魂补丁系统（Soul Patch System）
+
+**目的**：将审查批判和幡主学习成果注入魂的运行时行为，让魂「知道自己在被批判」。
+
+### 补丁生命周期
+
+```
+审查批判 / 幡主学习成果 / 附体失效分析
+  → 结构化归档（五类）
+  → 前三类自动生成补丁提案草稿
+  → 魂修正案流程（提案→申辩→裁决）
+  → 批准后写入魂 YAML patches[]
+  → 附体时合并为运行时 prompt
+  → 监测 5 次附体有效性
+  → 有效：补丁固化 / 无效：触发回滚
+```
+
+### 补丁类型
+
+| 类型 | 触发来源 | 效果 |
+|------|---------|------|
+| `blindspot_awareness` | 审查批判/幡主学习发现盲区 | 附体时加载自我限制——"在此类任务中请注意本魂的结构性盲区" |
+| `boundary_refinement` | 适用边界复审/附体失效 | 收紧或放宽某类场景的适用性 |
+| `trigger_adjustment` | 匹配失败/零召唤分析 | 调整 trigger 关键词/场景/排除项 |
+| `pairing_insight` | 合议/辩论/幡主学习 | 记录与另一魂的搭配效果，影响匹配推荐 |
+
+### 运行时 prompt 合并规则（含条件化激活）
+
+```
+运行时 prompt = 源 summon_prompt
+
+# 遍历 patches，仅加载满足条件的补丁
+for patch in patches where approved_by is set:
+    if patch.activation_conditions exists:
+        if (task 的领域 ∩ patch.activation_conditions.task_domains) 非空
+           OR (task 的关键词 ∩ patch.activation_conditions.task_keywords) 非空:
+           加载此补丁
+        else:
+           跳过此补丁（节省 prompt token）
+    else:
+        # 无激活条件 = 始终加载（向后兼容）
+        加载此补丁
+
+已加载补丁追加格式：
+  "\n\n## 魂补丁（运行时自我意识）\n"
+  + "\n### 补丁 v{patch.version}（{patch.source}，触发条件：{activation_conditions or '始终'}）\n"
+  + patch.content
+```
+
+**补丁条件化的设计理由**：
+- 不是所有盲区在所有任务中都触发——稻盛和夫的阶级盲区在纯财务核算任务中不需要加载
+- 无条件加载 = 每个补丁占用 prompt token = 补丁多了会吞噬上下文窗口
+- 条件化让补丁从「普遍规则」变成「条件规则」——更接近经验（「在这种任务中我容易犯错」）
+
+**关键约束**：
+- 补丁**不修改**源 summon_prompt——源 prompt 是历史锚点
+- 补丁追加的是**自我意识层**——魂知道自己的局限，不等于方法论被替换
+- 补丁内容必须是「自我限制性陈述」而非「方法论修正」——保留魂的原始思维，只加边界意识
+
+### 补丁格式示例
+
+```yaml
+patches:
+  - version: 1
+    applied_at: "2026-05-15"
+    source: "幡主学习-列宁学稻盛和夫vs鲁迅-2026-05-10"
+    type: "blindspot_awareness"
+    content: |
+      在涉及劳资关系或阶级分析的任务中，请注意本魂方法论的结构性盲区：
+      阿米巴核算将劳资矛盾转化为劳动者内部竞争。这是本魂框架的系统性局限，
+      非偶发误判。在此类任务中，建议搭配阶级分析魂魄（列宁/毛泽东）的视角。
+    approved_by: "审查委员会-邓小平主审-2026-05-12"
+    effectiveness_tracking:
+      monitored: true
+      possessions_monitored: 0
+      target_count: 5
+      rollback_triggered: false
 ```
 
 ---

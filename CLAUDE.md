@@ -21,6 +21,47 @@
 
 **辩证综合 spawn**：合议模式阶段二，spawn `subagent_type="辩证综合官"`。该 agent 定义了五步综合法（共识/分歧/盲区/主要矛盾/行动纲领）。
 
+## Skill 集成规则
+
+### markitdown — 收魂格式转换
+
+收魂步骤 4 自动生成 `raw/{魂名}/媒体链接.md`。步骤 5 由主 agent 对每个链接调用 markitdown：
+```
+对 raw/{魂名}/媒体链接.md 中的每个非空链接，调用 Skill("markitdown") 转换，输出保存至 raw/{魂名}/转换素材/
+```
+转换素材纳入炼化阶段的读取范围。
+
+### humanizer — 去 AI 痕迹
+
+触发点两处：
+1. **炼化后**：Soul Profile 生成后，调用 `Skill("humanizer")` 处理 mind/voice/summon_prompt 字段
+2. **附体后**：每个魂的附体输出，在存档 Obsidian 前调用 `Skill("humanizer")`
+
+**硬性约束**：不同魂的语言风格必须保持差异。humanizer 指令必须包含该魂 voice 字段的风格保留声明。禁止用 humanizer 统一所有魂的语言风格。
+
+### agent-browser — 收魂双轨
+
+tmwd-bridge 不可用时，回退至 agent-browser：
+```bash
+python3 scripts/soul-search.py "{人物名}" --engine agent-browser -o raw/{人物名}/
+```
+agent-browser 适用于 JS 渲染页面的批量抓取，与 tmwd-bridge（交互式搜索）互补。
+
+### graphify — 审查知识图谱
+
+每次审查/互审报告保存后，调用 `Skill("graphify")` 更新知识图谱。图谱用于审查关系可视化和思想谱系追踪。非强制性——图谱损坏不影响万魂幡核心功能。
+
+### loop — 运维自动化
+
+**边界**：只自动化运维检查，不自动化判断行为。禁止用 loop 自动执行审查/互审/品级调整。
+
+设置维护循环：
+```
+/loop 1h python3 ~/.claude/skills/soul-banner/scripts/registry-health-check.py
+/loop 6h python3 ~/.claude/skills/soul-banner/scripts/cross-validate.py
+```
+审查委员会轮值调度不使用 loop——轮值由幡主在每次附体时手动判断。
+
 **Spawn 魂的标准模板**：
 ```
 Agent(
@@ -29,6 +70,12 @@ Agent(
   prompt="{任务描述}"
 )
 ```
+
+**委员会决策自动生效**：审查委员会的任何裁决（终末审查/品级裁定/修正案批准/散魂裁定）做出后，主 agent 必须立即自动更新 registry.yaml 和 committee/state.json，无需等待用户确认。这是强制性自动化步骤——用户不应需要手动说「更新」。具体更新内容取决于裁决类型：
+- 终末审查→更新魂的 gold_review + 审查记录 + committee/state.json pending_tasks
+- 品级裁定→更新魂的 grade + gold_review
+- 散魂裁定→执行知识归档（移动YAML + 标记registry + 保存终末报告）
+- 修正案批准→更新魂 YAML patches + registry
 
 **更新 registry.yaml**：使用 Python 脚本（heredoc 方式）。召唤记录追加至 `call-records.yaml` 而非 registry。示例：
 ```bash
@@ -93,6 +140,12 @@ python3 scripts/cross-validate.py
 **会话结束时**，在更新 registry 或魂 YAML 之后，也要重新运行交叉校验，确保写入操作未引入不一致。
 
 检查结果不需要用户确认——主 agent 自行判断是否需要修复数据不一致问题。
+
+**跨底模验证**：每季度（或每 30 次附体后）对高频使用的魂执行跨底模验证：
+```bash
+python3 scripts/cross-model-verify.py --protocol
+```
+验证实验协议详见脚本 `--protocol` 输出。验证结果保存至 `logs/cross-model-verify/`。
 
 ## 关键认知
 

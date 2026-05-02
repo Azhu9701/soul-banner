@@ -20,6 +20,12 @@ ENGINES = {
     "google": "https://www.google.com/search?q={query}",
 }
 
+# 需要 markitdown 转换的媒体扩展名
+MEDIA_EXTENSIONS = (".pdf", ".ppt", ".pptx", ".mp3", ".mp4", ".wav", ".m4a", ".mov", ".avi", ".webm")
+
+# 搜索引擎后端（可扩展）
+SEARCH_BACKENDS = ["tmwd-bridge", "agent-browser"]
+
 # CSS selectors per engine for extracting results
 RESULT_SELECTORS = {
     "baidu": (".result, .c-container", "h3", "a", ".c-abstract"),
@@ -81,6 +87,40 @@ def search_dimension(d, dim_name, query_cn, query_en, engines=("baidu", "bing", 
     return all_results
 
 
+def detect_media_links(all_data):
+    """从搜索结果中检测 PDF/音视频/PPT 链接，返回需要 markitdown 转换的列表."""
+    media_links = []
+    for dim_name, results in all_data.items():
+        for r in results:
+            link = r.get("link", "")
+            if link.lower().endswith(MEDIA_EXTENSIONS):
+                media_links.append({
+                    "dimension": dim_name,
+                    "title": r.get("title", ""),
+                    "link": link,
+                    "type": link.rsplit(".", 1)[-1].lower(),
+                })
+    return media_links
+
+
+def save_media_links(output_dir, media_links):
+    """将检测到的媒体链接写入文件，供后续 markitdown 处理."""
+    md_path = os.path.join(output_dir, "媒体链接.md")
+    if not media_links:
+        with open(md_path, "w") as f:
+            f.write("# 媒体链接\n\n（未检测到需要格式转换的媒体资源）\n")
+        return md_path
+
+    with open(md_path, "w") as f:
+        f.write(f"# 媒体链接（需 markitdown 转换）\n\n")
+        f.write(f"共 {len(media_links)} 个媒体资源\n\n")
+        for item in media_links:
+            f.write(f"## [{item['type'].upper()}] {item['title']}\n")
+            f.write(f"- 维度：{item['dimension']}\n")
+            f.write(f"- 链接：{item['link']}\n\n")
+    return md_path
+
+
 def collect(name, output_dir=None):
     """Main entry: search all 8 dimensions for a person, save results."""
     if output_dir is None:
@@ -116,6 +156,12 @@ def collect(name, output_dir=None):
                 f.write("\n")
 
     print(f"\n素材已保存至 {md_path}")
+
+    # 媒体链接检测（供后续 markitdown 转换）
+    media_links = detect_media_links(all_data)
+    media_path = save_media_links(output_dir, media_links)
+    print(f"媒体链接已保存至 {media_path} ({len(media_links)} 个需转换)")
+
     return all_data
 
 
@@ -124,5 +170,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="万魂幡收魂搜索")
     parser.add_argument("name", help="人物名")
     parser.add_argument("-o", "--output", help="输出目录", default=None)
+    parser.add_argument("--engine", help="搜索引擎后端", choices=SEARCH_BACKENDS, default="tmwd-bridge")
+    parser.add_argument("--no-detect-media", action="store_true", help="跳过媒体链接检测")
     args = parser.parse_args()
     collect(args.name, args.output)

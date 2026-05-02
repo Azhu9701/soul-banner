@@ -325,7 +325,13 @@ NICE_TO_HAVE_FIELDS = [
     'skills_expertise_description',
     'notes',
     'gold_review',
+    'patches',
 ]
+
+PATCH_REQUIRED_KEYS = ['version', 'applied_at', 'source', 'type', 'content', 'approved_by']
+PATCH_VALID_TYPES = ['blindspot_awareness', 'boundary_refinement', 'trigger_adjustment', 'pairing_insight']
+PATCH_OPTIONAL_KEYS = ['activation_conditions', 'effectiveness_tracking']
+PATCH_ACTIVATION_KEYS = ['task_domains', 'task_keywords']
 
 TRIGGER_REQUIRED_KEYS = ['keywords', 'domains', 'scenarios', 'exclude']
 ARTIFACT_REQUIRED_KEYS = ['skill_name', 'binding_reason']
@@ -401,6 +407,41 @@ def validate_soul(yaml_path: str) -> dict:
                     f"当前为 {type(art).__name__}"
                 )
                 result['valid'] = False
+
+    # 4.5. 检查 patches 结构
+    if 'patches' in soul and isinstance(soul['patches'], list):
+        for i, patch in enumerate(soul['patches']):
+            if not isinstance(patch, dict):
+                result['errors'].append(f"patches[{i}] 应为 dict，当前为 {type(patch).__name__}")
+                result['valid'] = False
+                continue
+            for key in PATCH_REQUIRED_KEYS:
+                if key not in patch:
+                    result['errors'].append(f"patches[{i}] 缺少: {key}")
+                    result['valid'] = False
+            if patch.get('type') and patch['type'] not in PATCH_VALID_TYPES:
+                result['errors'].append(
+                    f"patches[{i}].type 无效值 '{patch['type']}'，须为: {PATCH_VALID_TYPES}"
+                )
+                result['valid'] = False
+            # 校验 activation_conditions 结构（可选字段）
+            if 'activation_conditions' in patch and patch['activation_conditions'] is not None:
+                ac = patch['activation_conditions']
+                if not isinstance(ac, dict):
+                    result['errors'].append(f"patches[{i}].activation_conditions 应为 dict")
+                    result['valid'] = False
+                else:
+                    for key in ac:
+                        if key not in PATCH_ACTIVATION_KEYS:
+                            result['warnings'].append(
+                                f"patches[{i}].activation_conditions 含未知键 '{key}'，已知键: {PATCH_ACTIVATION_KEYS}"
+                            )
+                    for key in PATCH_ACTIVATION_KEYS:
+                        if key in ac and not isinstance(ac[key], list):
+                            result['errors'].append(
+                                f"patches[{i}].activation_conditions.{key} 应为列表"
+                            )
+                            result['valid'] = False
 
     # 5. 质量检查 (warnings)
     if 'summon_prompt' in soul and isinstance(soul['summon_prompt'], str):
