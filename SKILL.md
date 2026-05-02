@@ -248,18 +248,22 @@ cmux 将合议/辩论/接力的魂执行阶段**可视化**——每个魂在独
 
 **与传统合议/辩论/接力的区别**：触发词加「可视化」即启用 cmux 模式。不加「可视化」保持传统 Agent spawn。
 
-**核心流程**：
+**核心流程**（cmux pane 调度 Agent 模式）：
 
 ```
 预设声明 → match.py → 幡主审查 → cmux-plan.py 生成编排计划
-  → cmux_launch_agents 启动魂 pane（并行）
-  → 用户实时观看魂分析（可随时 cmux_broadcast 质询）
-  → cmux_read_all 收集输出
-  → 写 /tmp/sb-{任务}/{魂名}.md
+  → cmux_launch_agents 启动 N 个 cmux pane
+  → 每个 pane 用 Agent(subagent_type="{魂名}") 召唤魂 agent
+  → 魂 agent 分析（summon_prompt 由 agent 系统注入）
+  → 魂 agent 写文件 /tmp/sb-{slug}/{魂名}.md
+  → cmux pane 确认完成
+  → 主 agent Read 所有输出
   → spawn 辩证综合官（传统 Agent）
   → 使用者参与/自我否定/空椅子
   → transact.py 落盘
 ```
+
+**关键架构**：cmux pane 只做调度（调用 Agent 工具），不直接回答。魂 agent 的 summon_prompt 由 agent 系统自动注入——不是文本粘贴。
 
 **回退**：cmux 未安装/未运行/魂数 > 6 时自动回退到传统 Agent spawn。
 
