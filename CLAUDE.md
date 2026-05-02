@@ -42,11 +42,19 @@
 **原则**：主 agent **禁止**用自己的话改写魂输出——无论是传给下游 agent 还是存档 Obsidian。魂输出必须是原文。
 
 **流程**：
-1. 每个魂子 agent 返回后，主 agent **立即**将其输出写入 `/tmp/sb-{任务}/{魂名}.md`（本地磁盘，瞬时写入）。写文件时必须逐字复制 agent 返回的原文，禁止概括、压缩、改写、重新组织。
-2. `/tmp/sb-{任务}/` 是本次附体的**快速缓存**——后续辩证综合官直接读这些文件。
+1. 每个魂子 agent 返回后，主 agent **立即**将其输出写入 `/tmp/sb-{任务}/{魂名}.md`。写文件时必须逐字复制 agent 返回的原文，禁止概括、压缩、改写、重新组织。
+2. `/tmp/sb-{任务}/` 是本次附体的快速缓存——辩证综合官直接读这些文件。
 3. **辩证综合官**：prompt 中只给 `/tmp/sb-{任务}/` 文件路径清单，自己 Read 原文。
-4. **附体结束后**，将 `/tmp/sb-{任务}/` 下所有文件复制到 Obsidian：`$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/`。
-5. 若 `$OBSIDIAN_VAULT` 未配置 → 跳过 Obsidian 同步，`/tmp/sb-{任务}/` 即为最终存档（重启后由系统清理）。
+4. **附体结束后**，调用 `transact.py` 一键完成 Obsidian 同步 + registry 更新 + call-records 记录：
+   ```bash
+   python3 scripts/transact.py possession-close {魂名} \
+     --mode {模式} --task "{任务简述}" \
+     --effectiveness {有效|部分有效|无效} \
+     --self-negation "{学习性使用/消费性使用 + 说明}" \
+     --empty-chair "{空椅子回答}" \
+     --obsidian-batch /tmp/sb-{任务}/manifest.json
+   ```
+5. 若 `$OBSIDIAN_VAULT` 未配置 → `transact.py` 跳过 Obsidian 同步，仅更新 registry。
 
 **辩证综合官 prompt 模板**：
 ```
@@ -249,18 +257,17 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 
 **Obsidian 存档方式**：
 
-魂输出先写入 `/tmp/sb-{任务}/` 做快速缓存，附体结束后复制到 Obsidian。`possession-close` 更新 registry 和 call-records。
+`transact.py possession-close` 自动处理 Obsidian 同步。主 agent 只需准备 `/tmp/sb-{任务}/manifest.json`：
 
-Obsidian 目录结构：
-```
-$OBSIDIAN_VAULT/万民幡/
-├── 单魂/{魂名}/{日期}-{任务}.md
-├── 合议/{任务}/{魂A}.md / {魂B}.md / 辩证综合.md
-├── 辩论/{议题}/{正方}.md / {反方}.md / 裁决.md
-└── 接力/{任务}/{阶段1}.md / {阶段2}.md / 衔接审查.md
+```json
+{"mode": "合议", "task": "任务简述", "date": "2026-05-02", "files": [
+  {"soul": "魂A", "role": "角色", "file": "/tmp/sb-{任务}/魂A.md"},
+  {"soul": "魂B", "role": "角色", "file": "/tmp/sb-{任务}/魂B.md"},
+  {"soul": "辩证综合官", "role": "辩证综合", "file": "/tmp/sb-{任务}/辩证综合.md"}
+]}
 ```
 
-若 `$OBSIDIAN_VAULT` 未配置 → 跳过同步，`/tmp/sb-{任务}/` 即为最终存档。
+`transact.py` 自动：复制文件到 `$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/` → 更新 registry → 记录 call-records。若 `$OBSIDIAN_VAULT` 未配置 → 跳过 Obsidian 同步，仅更新 registry。
 
 **目录删除检查清单**：附体任务涉及删除目录时，主 agent 在 Task 描述中必须：
 1. 逐项列出每个待删目录，说明其性质（生产依赖/开发产物/一次性实验）
@@ -302,7 +309,7 @@ $OBSIDIAN_VAULT/万民幡/
 2. **担忧**：你担心什么？（方法、结果、盲区）
 3. **未知**：你不知道什么？哪些信息/视角是你明确缺失的？
 
-使用者的回答**不用于筛选魂**——它们用于附体结束后的自我否定对照。主 agent 将使用者的预设文字记录到 `/tmp/sb-{任务}/使用者预设.md`。（附体结束后随其他文件一起同步至 Obsidian。）
+使用者的回答**不用于筛选魂**——它们用于附体结束后的自我否定对照。主 agent 将使用者的预设文字记录到 `/tmp/sb-{任务}/使用者预设.md`。（`transact.py` 落盘时随其他文件一起同步至 Obsidian。）
 
 ### 自我否定环节（每次附体后强制）
 
