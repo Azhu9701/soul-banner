@@ -501,7 +501,7 @@ if 归档分类 in [trigger_calibration, blindspot_mapping, boundary_refinement]
 
 5. 品级标准反馈
    若被散魂是金魂 → 触发金魂三条标准复审
-   累计散魂的金魂数 ≥ 3 时 → 强制解冻金魂炼化冻结，重新审议金魂标准
+   累计散魂的金魂数 ≥ 3 时 → 重新审议金魂标准
 ```
 
 ### 裁决后自动更新（强制执行）

@@ -53,7 +53,7 @@ soul-banner/
 ├── SKILL.md                        # 技能文档（系统加载）
 ├── CLAUDE.md                        # 法旨层常驻指令
 ├── auto-possess.md                  # 附体机制详解
-├── soul-profile-format.md           # 品级标准 + 金魂/金魂冻结定义
+├── soul-profile-format.md           # 品级标准 + 金魂定义
 ├── registry.yaml                    # 魂魄总册（运行时数据）
 ├── refine.py                        # 炼化辅助脚本（含 validate_soul / sync_soul_to_obsidian）
 ├── scripts/
@@ -139,7 +139,7 @@ python3 scripts/sync-agent.py souls/{魂名}.yaml
 ```
 agent 文件写入 `~/.claude/agents/{魂名}.md`，重启 Claude Code 后即可通过 `subagent_type="{魂名}"` 直接召唤。**soul YAML 是 agent 的唯一真相源**——禁止手动编辑 agent 文件。
 
-**金魂炼化冻结**：金魂品级自 `soul-profile-format.md` 定义的三条标准判定。**自 2026-05-01 起，新金魂炼化冻结**——不再通过炼化产生新金魂。现有金魂维持不变（具体名单见 `registry.yaml`）。非金魂炼化及品级升级正常工作。此冻结由审查委员会轮值监督，解冻需委员会全员共识。详见 `soul-profile-format.md`「金魂冻结条款」。
+金魂品级自 `soul-profile-format.md` 定义的三条标准判定：可操作方法论 + 独立世界观 + 自我修正机制，三者缺一不可。不同团队可根据自身需求和实践数据调整金魂名单。
 
 ---
 
@@ -266,7 +266,7 @@ python3 scripts/prompt-audit.py \
 | 蓝魂 | 🔵 | 资料充足，Skill链 + 执行策略 |
 | 紫魂 | 🟣 | 有明确方法论，但依赖天赋不可复制 |
 | 银魂 | 🥈 | 方法论完整可操作，缺独立世界观和方向判断 |
-| 金魂 | 🟡 | 独立世界观 + 方向判断 + 自我修正机制【冻结炼化，见上文】 |
+| 金魂 | 🟡 | 独立世界观 + 方向判断 + 自我修正机制 |
 
 金魂必须同时满足三条（详见 `soul-profile-format.md`）：可操作方法论 + 独立世界观 + 自我批判。
 
@@ -357,7 +357,7 @@ python3 scripts/prompt-audit.py \
 
 ## 参考资源
 
-按需加载：**[CLAUDE.md](CLAUDE.md)**（法旨层常驻指令+Task模板+Skill集成规则）、**[auto-possess.md](auto-possess.md)**（附体机制+审查板块+五模式+散魂仪式）、**[soul-profile-format.md](soul-profile-format.md)**（品级标准+金魂冻结+轮值细则+魂补丁系统）、**[references/马斯克.yaml](references/马斯克.yaml)**（紫魂示例）、**souls/{魂名}.yaml**（魂魄档案）、**registry.yaml**（总册）、**registry-lite.yaml**（匹配速查表，~6KB，自动生成）、**scripts/soul-search.py**（收魂搜索+媒体链接检测+双引擎）、**scripts/soul-banner-hook.py**（Hook）、**scripts/prompt-audit.py**（审计日志）、**scripts/cross-validate.py**（三方交叉校验）、**scripts/cross-model-verify.py**（跨底模验证）、**scripts/registry-health-check.py**（健康检查+零召唤推荐）、**scripts/generate-registry-lite.py**（生成匹配速查表）、**scripts/maintenance-loop.sh**（运维自动化）、**agents/{审查官}.md**、**agents/{辩证综合官}.md**
+按需加载：**[CLAUDE.md](CLAUDE.md)**（法旨层常驻指令+Task模板+Skill集成规则）、**[auto-possess.md](auto-possess.md)**（附体机制+审查板块+五模式+散魂仪式）、**[soul-profile-format.md](soul-profile-format.md)**（品级标准+轮值细则+魂补丁系统）、**[references/马斯克.yaml](references/马斯克.yaml)**（紫魂示例）、**souls/{魂名}.yaml**（魂魄档案）、**registry.yaml**（总册）、**registry-lite.yaml**（匹配速查表，~6KB，自动生成）、**scripts/soul-search.py**（收魂搜索+媒体链接检测+双引擎）、**scripts/soul-banner-hook.py**（Hook）、**scripts/prompt-audit.py**（审计日志）、**scripts/cross-validate.py**（三方交叉校验）、**scripts/cross-model-verify.py**（跨底模验证）、**scripts/registry-health-check.py**（健康检查+零召唤推荐）、**scripts/generate-registry-lite.py**（生成匹配速查表）、**scripts/maintenance-loop.sh**（运维自动化）、**agents/{审查官}.md**、**agents/{辩证综合官}.md**
 
 **集成外部 Skill**：`markitdown`（收魂格式转换，免费开源）、`humanizer`（去 AI 痕迹，纯 LLM 无外部 API）、`agent-browser`（收魂双轨备选，免费开源）、`graphify`（审查知识图谱，可选，免费）、`loop`（周期性运维，内置免费）
 
