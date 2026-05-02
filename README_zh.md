@@ -126,6 +126,39 @@
 
 ---
 
+## 推荐：CMUX
+
+多魂合议模式需要并行运行多个 AI 子智能体，推荐 **[CMUX](https://github.com/manaflow-ai/cmux)** ——一个可编程终端复用器，内置 AI 智能体编排能力。
+
+```bash
+brew tap manaflow-ai/cmux && brew install --cask cmux
+```
+
+CMUX 提供：
+- **多窗格智能体网格** — 在单个工作区中并排启动 3+ 个万魂幡 agent
+- **跨 agent 通信** — 通过 `cmux_orchestrate` 在窗格间传递魂输出
+- **会话保存/恢复** — 保存完整合议会话（含所有 agent 状态），供后续复盘
+- **80+ MCP 工具** — 搭配 `cmux-agent-mcp` 可实现编程化多终端控制
+
+<details>
+<summary>示例：启动合议会话</summary>
+
+```bash
+# 创建 3 窗格工作区
+cmux launch_grid --rows 1 --cols 3 --agents claude,claude,claude
+
+# 向不同窗格分发不同魂的 prompt
+cmux orchestrate \
+  --pane 1 "spawn 列宁分析：{任务}" \
+  --pane 2 "spawn 费曼分析：{任务}" \
+  --pane 3 "spawn 波伏娃分析：{任务}"
+```
+</details>
+
+CMUX 免费开源，非万魂幡内置依赖，但强烈推荐作为多 agent 工作流的终端环境。
+
+---
+
 ## 安装与使用
 
 1. 将本仓库克隆到 Claude Code 的 skills 目录

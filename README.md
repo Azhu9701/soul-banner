@@ -126,6 +126,39 @@ See [免费使用指南](SKILL.md#免费使用指南) in SKILL.md for details.
 
 ---
 
+## Recommended: CMUX
+
+For multi-soul council mode where multiple AI agents run in parallel, we recommend **[CMUX](https://github.com/manaflow-ai/cmux)** — a programmable terminal multiplexer with built-in AI agent orchestration.
+
+```bash
+brew tap manaflow-ai/cmux && brew install --cask cmux
+```
+
+CMUX enables:
+- **Multi-pane agent grids** — Launch 3+ 万魂幡 agents side-by-side in a single workspace
+- **Cross-agent communication** — Send soul outputs between panes via `cmux_orchestrate`
+- **Session save/restore** — Save full council sessions with all agent states for later review
+- **80+ MCP tools** — When paired with `cmux-agent-mcp`, programmatic control over all terminals
+
+<details>
+<summary>Example: Launch a council session</summary>
+
+```bash
+# Create a 3-pane workspace for 合议 mode
+cmux launch_grid --rows 1 --cols 3 --agents claude,claude,claude
+
+# Or orchestrate different prompts to each pane
+cmux orchestrate \
+  --pane 1 "spawn 列宁分析：{task}" \
+  --pane 2 "spawn 费曼分析：{task}" \
+  --pane 3 "spawn 波伏娃分析：{task}"
+```
+</details>
+
+CMUX is free and open source. It is not bundled with 万魂幡 but is the recommended terminal environment for multi-agent workflows.
+
+---
+
 ## Installation & Usage
 
 1. Clone into your Claude Code skills directory
