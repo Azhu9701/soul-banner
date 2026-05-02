@@ -42,11 +42,11 @@
 **原则**：主 agent **禁止**用自己的话改写魂输出——无论是传给下游 agent 还是存档 Obsidian。魂输出必须是原文。
 
 **流程**：
-1. 每个魂子 agent 返回后，主 agent **立即**将其输出直接写入 Obsidian：`$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/{魂名}.md`。写文件时必须逐字复制 agent 返回的原文，禁止概括、压缩、改写、重新组织。
-2. Obsidian 路径下的文件是本次附体的**权威副本**——后续所有操作只读这些文件，不重新生成内容。
-3. **辩证综合官**：prompt 中只给 Obsidian 文件路径清单，自己 Read 原文。
-4. 若 `$OBSIDIAN_VAULT` 未配置或不可写 → 回退到 `soul-banner/archive/`。
-5. **禁止**：先写 `/tmp` 再复制、使用 `transact.py` 中转。
+1. 每个魂子 agent 返回后，主 agent **立即**将其输出写入 `/tmp/sb-{任务}/{魂名}.md`（本地磁盘，瞬时写入）。写文件时必须逐字复制 agent 返回的原文，禁止概括、压缩、改写、重新组织。
+2. `/tmp/sb-{任务}/` 是本次附体的**快速缓存**——后续辩证综合官直接读这些文件。
+3. **辩证综合官**：prompt 中只给 `/tmp/sb-{任务}/` 文件路径清单，自己 Read 原文。
+4. **附体结束后**，将 `/tmp/sb-{任务}/` 下所有文件复制到 Obsidian：`$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/`。
+5. 若 `$OBSIDIAN_VAULT` 未配置 → 跳过 Obsidian 同步，`/tmp/sb-{任务}/` 即为最终存档（重启后由系统清理）。
 
 **辩证综合官 prompt 模板**：
 ```
@@ -54,9 +54,9 @@
 {任务描述}
 
 ## 各魂分析文件（请自行 Read 每个文件获取原文）
-- $OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/{魂A}.md
-- $OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/{魂B}.md
-- $OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/{魂C}.md
+- /tmp/sb-{任务}/{魂A}.md
+- /tmp/sb-{任务}/{魂B}.md
+- /tmp/sb-{任务}/{魂C}.md
 
 ## 幡主预审约束
 {约束条件}
@@ -176,8 +176,8 @@ python3 scripts/cmux-plan.py \
 
 **2. 初始化文件**：
 ```bash
-mkdir -p "$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{slug}"
-touch "$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{slug}/{魂A}.md" ...
+mkdir -p /tmp/sb-{slug}
+touch /tmp/sb-{slug}/{魂A}.md /tmp/sb-{slug}/{魂B}.md ...
 ```
 
 **3. 启动 cmux Agent pane 并分发任务**：
@@ -204,7 +204,7 @@ cmux_set_status(key="{魂名}", value="写作中/已完成")
 当所有 pane 报告完成，`cmux_set_progress(0.7)`。
 
 **5. 收集输出**：
-主 agent Read `$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{slug}/*.md` → spawn 辩证综合官（与传统模式相同）。
+主 agent Read `/tmp/sb-{slug}/*.md` → spawn 辩证综合官（与传统模式相同）。
 
 **6. 清理**：`cmux_set_progress(1.0)`。默认保留 workspace。
 
@@ -249,9 +249,9 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 
 **Obsidian 存档方式**：
 
-魂输出由主 agent 直接写入 Obsidian vault，不再经过 `/tmp` 中转或 `transact.py` 复制。`possession-close` 仅更新 registry 和 call-records。
+魂输出先写入 `/tmp/sb-{任务}/` 做快速缓存，附体结束后复制到 Obsidian。`possession-close` 更新 registry 和 call-records。
 
-目录结构：
+Obsidian 目录结构：
 ```
 $OBSIDIAN_VAULT/万民幡/
 ├── 单魂/{魂名}/{日期}-{任务}.md
@@ -260,7 +260,7 @@ $OBSIDIAN_VAULT/万民幡/
 └── 接力/{任务}/{阶段1}.md / {阶段2}.md / 衔接审查.md
 ```
 
-若 `$OBSIDIAN_VAULT` 未配置 → 回退到 `soul-banner/archive/`。
+若 `$OBSIDIAN_VAULT` 未配置 → 跳过同步，`/tmp/sb-{任务}/` 即为最终存档。
 
 **目录删除检查清单**：附体任务涉及删除目录时，主 agent 在 Task 描述中必须：
 1. 逐项列出每个待删目录，说明其性质（生产依赖/开发产物/一次性实验）
@@ -302,7 +302,7 @@ $OBSIDIAN_VAULT/万民幡/
 2. **担忧**：你担心什么？（方法、结果、盲区）
 3. **未知**：你不知道什么？哪些信息/视角是你明确缺失的？
 
-使用者的回答**不用于筛选魂**——它们用于附体结束后的自我否定对照。主 agent 将使用者的预设文字记录到 `$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/使用者预设.md`。
+使用者的回答**不用于筛选魂**——它们用于附体结束后的自我否定对照。主 agent 将使用者的预设文字记录到 `/tmp/sb-{任务}/使用者预设.md`。（附体结束后随其他文件一起同步至 Obsidian。）
 
 ### 自我否定环节（每次附体后强制）
 
