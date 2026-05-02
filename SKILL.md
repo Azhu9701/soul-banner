@@ -248,20 +248,20 @@ cmux 将合议/辩论/接力的魂执行阶段**可视化**——每个魂在独
 
 **与传统合议/辩论/接力的区别**：触发词加「可视化」即启用 cmux 模式。不加「可视化」保持传统 Agent spawn。
 
-**核心流程**（v3: tail -f 显示器，零 token）：
+**核心流程**（v4: Agent 调度器）：
 
 ```
 预设声明 → match.py → 幡主审查 → cmux-plan.py 生成编排计划
   → mkdir + touch 预创建输出文件
-  → cmux_new_workspace + cmux_new_split 创建 tail -f 显示面板
-  → 主 agent 并行 spawn Agent(subagent_type="{魂名}")（与传统模式完全一致）
-  → 魂 agent 分析 → 写 /tmp/sb-{slug}/{魂名}.md → tail -f pane 实时显示
-  → 主 agent Read 所有输出 → spawn 辩证综合官
+  → cmux_launch_agents(assignments=[pane调度prompt]) 启动 N 个 Claude CLI
+  → 每个 pane 收到调度指令 → 调用 Agent(subagent_type="{魂名}")
+  → 魂 agent 分析 → 写 /tmp/sb-{slug}/{魂名}.md
+  → cmux_read_all 监控进度 → 主 agent Read 所有输出 → spawn 辩证综合官
   → 使用者参与/自我否定/空椅子
   → transact.py 落盘
 ```
 
-**关键**：cmux pane 是纯显示器（`tail -f`），零 token 消耗零启动延迟。魂分析由主 agent 直接 spawn Agent——与传统模式质量完全一致。
+**关键**：cmux pane 是 Agent 调度器，每 pane 约 500 token 调度开销。魂分析由 pane 内的 Agent(subagent_type) 完成——summon_prompt 自动注入，分析质量与传统模式完全一致。思考过程和文件写入确认实时可见。
 
 **回退**：cmux 未安装/未运行/魂数 > 6 时自动回退到传统 Agent spawn。
 
