@@ -126,9 +126,13 @@
 Agent(
   subagent_type="{魂名}",
   description="{任务简述} — {魂名}视角",
-  prompt="{任务描述}"
+  prompt="{任务描述}
+
+---
+本魂基于{炼化日期}收魂素材炼化，素材来源包括多引擎搜索和公开文献。这不是{魂名}本人——这是基于其公开文本的 AI 模拟。在用它做高利害决策前，请交叉验证。"
 )
 ```
+Prompt 末尾必须附带一行生成链路说明：「本魂基于{炼化日期}收魂素材炼化……是 AI 模拟，不是本人。」
 
 **Spawn 幡主审查专用模板**（必须严格遵循）：
 ```
@@ -154,7 +158,10 @@ Agent(
 |------|--------|------|
 | 炼化完成 | `refine-close <魂名>` | `python3 scripts/transact.py refine-close 鲁迅` |
 | 审查/互审完成 | `review-apply <魂名> --review-file <路径> [--verdict "..."] [--grade X] [--reviewer X]` | `python3 scripts/transact.py review-apply 费曼 --review-file reviews/金魂互审-鲁迅审费曼-2026-05-02.md --verdict "维持金魂"` |
-| 附体结束 | `possession-close <魂名> --mode <模式> --task <任务> --effectiveness <有效\|部分有效\|无效> [--notes "..."] [--obsidian-content <文件> \| --obsidian-batch <manifest.json> \| --obsidian-stdin]` | `python3 scripts/transact.py possession-close 鲁迅 --mode 单魂 --task "组织文化诊断" --effectiveness 有效 --notes "揭露了三点自欺" --obsidian-content /tmp/output.md` |
+| 附体结束 | `possession-close <魂名> --mode <模式> --task <任务> --effectiveness <有效\|部分有效\|无效> --self-negation "<学习性使用/消费性使用 + 说明>" --empty-chair "<空椅子回答>" [--obsidian-content <文件> \| --obsidian-batch <manifest.json> \| --obsidian-stdin]` | `python3 scripts/transact.py possession-close 鲁迅 --mode 单魂 --task "组织文化诊断" --effectiveness 有效 --self-negation "学习性使用：对团队自欺机制的理解被修正" --empty-chair "一线执行者的利益没有被组织架构代表" --obsidian-content /tmp/output.md` |
+| 附体结束（stdin） | `possession-close <魂名> ... --obsidian-stdin` | `echo "$content" \| python3 scripts/transact.py possession-close 鲁迅 ... --self-negation "..." --empty-chair "..." --obsidian-stdin` |
+
+**⚠️ 代码强制层**：`--self-negation` 和 `--empty-chair` 为必填参数。缺少任一参数 → transact.py 拒绝落盘（exit 1）。这是从 prompt 层提升到代码层的硬约束——不可跳过。
 | 散魂 | `dismiss <魂名> [--reason "..."]` | `python3 scripts/transact.py dismiss 海绵宝宝 --reason "终末审查裁定散魂"` |
 | Task 持久化 | `task-save --tasks '<JSON>'` | `python3 scripts/transact.py task-save --tasks '[{"id":"O1","name":"收魂:xxx","status":"pending"}]'` |
 | Task 恢复 | `task-restore` | `python3 scripts/transact.py task-restore` |
@@ -209,6 +216,62 @@ Agent(
 调用 Skill(soul-banner) → 遵循 SKILL.md 附体流程 → 完成后核对 Task 列表全部为 completed。
 
 附体步骤（详见 SKILL.md）：匹配魂 → 幡主审查 → 执行 → registry 更新 + Obsidian 存档（后两步并行）。附体结束报告：参与信息 → 存档位置 → 魂/辩证综合官原文。
+
+### 使用者预设声明（匹配前强制）
+
+在运行 `match.py` 之前，主 agent 必须主动询问使用者以下问题（合议/辩论模式下必答，单魂模式下至少回答前两问）：
+
+1. **已有判断**：你对这个问题已经有了什么判断？你倾向于什么结论？
+2. **担忧**：你担心什么？（方法、结果、盲区）
+3. **未知**：你不知道什么？哪些信息/视角是你明确缺失的？
+
+使用者的回答**不用于筛选魂**——它们用于附体结束后的自我否定对照。主 agent 将使用者的预设文字记录到 `/tmp/sb-{任务}/使用者预设.md`。
+
+### 自我否定环节（每次附体后强制）
+
+每次附体结果呈现后，主 agent 必须强制询问使用者：
+
+> **「在这次分析中，你的哪个预设被动摇了？或者说，这次附体有没有让你改变任何已有的判断？」**
+
+使用者必须回答。判定规则：
+
+- 若使用者可以说出**至少一个被修正的预设** → 本次附体标记为「学习性使用」
+- 若使用者无法说出任何被修正的预设 → 本次附体标记为「消费性使用」
+- **连续 3 次消费性使用** → 系统强制使用者进入**幡主学习模式**：下一轮必须用两个方法论对立度最高的魂做互读互审，不得使用单魂附体模式
+
+消费/学习标记记录到 `possession-close --notes` 中（格式：`学习性使用：预设X被修正` / `消费性使用：无预设被修正 [第N次连续]`）。
+
+### 使用者参与环节（合议/辩论/接力后强制）
+
+辩证综合官给出综合结论后，主 agent 必须向使用者提问两个问题（在质询邀请之前）：
+
+> **1. 这个综合的哪个部分是你最没想到的？**
+> **2. 这个综合的哪个部分你在附体前就已经知道？**
+
+使用者必须回答。这两个问题的作用：
+- 第 1 问标记真正的学习——暴露预设边界之外的东西
+- 第 2 问暴露消费行为——若使用者表示「全都知道」，说明本次附体未提供任何认知增量，标记为消费性使用
+
+### 空椅子拷问（每次附体报告末尾）
+
+每次附体结束报告末尾，主 agent 必须追加空椅子拷问：
+
+> **「在这次分析中，谁的利益被代表？谁的发言权没有被给？」**
+
+使用者用自己的话回答。不要求答案完美——要求使用者**面对这个问题**。回答追加到 Obsidian 存档报告的末尾（作为报告的最后一节）。
+
+### 幡主质询环节（合议/辩论/接力后可选）
+
+辩证综合/裁决/终审结果呈现后，主 agent 必须**主动询问**使用者是否需要质询。质询不是让使用者自己分析——使用者提问，魂回应。
+
+**流程**：
+1. 结果呈现后，主 agent 问：「是否需要对任何魂的输出提出质询？」
+2. 若使用者提出质询（如「波伏娃关于笑声政治性的判断，我觉得……」），主 agent 将质询内容 spawn 给被质询的魂，该魂独立回应
+3. 若质询涉及多个魂，每个魂独立回应后、辩证综合官再做一次简短的综合更新
+4. 质询回应追加至 Obsidian 存档（作为原文件的补充附件，不覆盖原文）
+5. 若使用者不质询，直接结束
+
+**原则**：使用者的位置知识（2026 年中国互联网使用经验、对当下社会氛围的体感）通过质询进入魂的对话。魂的分析不是终端产品——是可被追问的。
 
 ## 启动流程
 

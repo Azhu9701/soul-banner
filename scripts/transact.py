@@ -287,12 +287,40 @@ def cmd_review_apply(soul_name, review_file, verdict=None, grade=None, reviewer=
 
 
 def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_file=None,
-                         souls_list=None, obsidian_content=None, obsidian_batch=None, obsidian_stdin=None):
-    """附体结束后：追加 call-records → prompt-audit → Obsidian 存档 → 重生成 lite → 交叉校验"""
+                         souls_list=None, obsidian_content=None, obsidian_batch=None, obsidian_stdin=None,
+                         self_negation="", empty_chair=""):
+    """附体结束后：追加 call-records → prompt-audit → Obsidian 存档 → 重生成 lite → 交叉校验
+
+    硬性约束（代码强制层）：
+    - --self-negation 必填：格式为「学习性使用：{预设X被修正}」或「消费性使用：无预设被修正 [第N次连续]」
+    - --empty-chair 必填：使用者的空椅子拷问回答
+    缺少任一参数 → 拒绝落盘。这是从 prompt 层提升到代码强制层的反消费机制。
+    """
+    # 硬性检查：自我否定环节和空椅子拷问（代码强制，不可跳过）
+    if not self_negation or not self_negation.strip():
+        print("❌ 拒绝落盘：缺少 --self-negation 参数", file=sys.stderr)
+        print("   这是从 prompt 层提升到代码层的硬约束。", file=sys.stderr)
+        print("   必须回答：哪个预设被这次附体动摇了？（学习性使用/消费性使用 + 说明）", file=sys.stderr)
+        return 1
+    if not empty_chair or not empty_chair.strip():
+        print("❌ 拒绝落盘：缺少 --empty-chair 参数", file=sys.stderr)
+        print("   这是从 prompt 层提升到代码层的硬约束。", file=sys.stderr)
+        print("   必须回答：在这次分析中，谁的利益被代表？谁的发言权没有被给？", file=sys.stderr)
+        return 1
+
+    # 检测消费性使用模式：notes 中记录连续消费次数
+    import re as _re
+    consumption_match = _re.search(r'第(\d+)次连续', self_negation)
+    consecutive_consumption = int(consumption_match.group(1)) if consumption_match else 0
+    if consecutive_consumption >= 3:
+        print(f"⚠️  警告：连续 {consecutive_consumption} 次消费性使用！", file=sys.stderr)
+        print("   下一轮必须使用幡主学习模式，不得使用单魂附体。", file=sys.stderr)
+        print("   此警告已写入附体记录。", file=sys.stderr)
+
     print(f"📝 附体落盘: {soul_name} [{mode}] {task}")
 
     # 1. 追加 call-records.yaml
-    print("\n[1/6] 追加附体记录...")
+    print("\n[1/7] 追加附体记录...")
     try:
         cr = load_yaml(CALL_RECORDS_PATH)
     except Exception:
@@ -305,6 +333,8 @@ def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_
         "notes": notes,
         "soul": soul_name,
         "task": task,
+        "self_negation": self_negation,
+        "empty_chair": empty_chair,
     }
     if souls_list:
         record["souls"] = souls_list
@@ -314,18 +344,18 @@ def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_
     cr["records"].insert(0, record)
     cr["更新时间"] = today_str()
     save_yaml(CALL_RECORDS_PATH, cr)
-    print(f"  ✅ 附体记录已追加")
+    print(f"  ✅ 附体记录已追加（含自我否定 + 空椅子）")
 
     # 2. prompt-audit 日志
-    print("\n[2/6] 审计日志...")
+    print("\n[2/7] 审计日志...")
     run_cmd(
         f"python3 {SCRIPTS_DIR}/prompt-audit.py --soul \"{soul_name}\" --mode \"{mode}\" "
         f"--date \"{today_str()}\" --effectiveness \"{effectiveness}\" --notes \"{notes}\"",
         "prompt-audit"
     )
 
-    # 3. Obsidian 存档（支持四种输入方式）
-    print("\n[3/6] Obsidian 存档...")
+    # 3. Obsidian 存档（支持四种输入方式，含空椅子回答）
+    print("\n[3/7] Obsidian 存档...")
     archived = []
 
     # 方式 A: 批量模式（合议/辩论/接力多魂输出）
@@ -335,6 +365,9 @@ def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_
     # 方式 B: stdin 模式
     elif obsidian_stdin:
         content = sys.stdin.read()
+        # 追加空椅子拷问回答
+        if empty_chair:
+            content += f"\n\n---\n## 空椅子拷问\n\n{empty_chair}"
         dest = _obsidian_write(mode, task, soul_name, today_str(), content)
         archived.append(dest)
         print(f"  ✅ Obsidian 存档: {dest}")
@@ -343,6 +376,9 @@ def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_
     elif obsidian_content:
         with open(obsidian_content) as f:
             content = f.read()
+        # 追加空椅子拷问回答
+        if empty_chair:
+            content += f"\n\n---\n## 空椅子拷问\n\n{empty_chair}"
         dest = _obsidian_write(mode, task, soul_name, today_str(), content)
         archived.append(dest)
         print(f"  ✅ Obsidian 存档: {dest}")
@@ -351,19 +387,28 @@ def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_
         print("  · 无 Obsidian 内容（支持 --obsidian-content/--obsidian-batch/--obsidian-stdin）")
 
     # 4. 重生成 lite
-    print("\n[4/6] 同步 registry-lite...")
+    print("\n[4/7] 同步 registry-lite...")
     regenerate_lite()
 
     # 5. 交叉校验
-    print("\n[5/6] 交叉校验...")
+    print("\n[5/7] 交叉校验...")
     cross_validate()
 
     # 6. 更新匹配手册（静默）
-    print("\n[6/6] 更新匹配手册...")
+    print("\n[6/7] 更新匹配手册...")
     run_cmd(
         f"python3 {SCRIPTS_DIR}/generate-handbook.py -o committee/handbook.md --compact",
         "generate-handbook"
     )
+
+    # 7. 消费性使用检测
+    print("\n[7/7] 消费性使用追踪...")
+    if consecutive_consumption >= 3:
+        print(f"  ⚠️  连续 {consecutive_consumption} 次消费性使用 → 下一轮强制幡主学习模式")
+    elif "消费性使用" in self_negation:
+        print(f"  消费性使用 ({consecutive_consumption}/3 次连续)")
+    else:
+        print(f"  学习性使用 ✓")
 
     print(f"\n✅ 附体落盘完成: {soul_name} | Obsidian: {len(archived)} 文件")
     print("   → humanizer: 若魂输出尚未经 humanizer 处理，请调用 Skill(\"humanizer\")")
@@ -658,6 +703,7 @@ USAGE = """用法:
   python3 scripts/transact.py refine-close <魂名>
   python3 scripts/transact.py review-apply <魂名> --review-file <路径> [--verdict "..."] [--grade 金] [--reviewer 列宁]
   python3 scripts/transact.py possession-close <魂名> --mode <模式> --task <任务> --effectiveness <有效|部分有效|无效>
+        --self-negation "<学习性使用/消费性使用 + 说明>" --empty-chair "<使用者的空椅子回答>"
         [--notes "..."] [--obsidian-content <文件> | --obsidian-batch <manifest.json> | --obsidian-stdin]
   python3 scripts/transact.py dismiss <魂名> [--reason "..."]
   python3 scripts/transact.py obsidian-sync [--souls 鲁迅,费曼] [--reviews-only] [--dry-run]
@@ -777,6 +823,9 @@ if __name__ == "__main__":
         for req in ["mode", "task", "effectiveness"]:
             if req not in kw:
                 print(f"❌ 缺少 --{req}"); sys.exit(1)
+        # 代码强制层：--self-negation 和 --empty-chair 必填
+        self_negation = kw.get("self_negation", "")
+        empty_chair = kw.get("empty_chair", "")
         # Obsidian 存档输入（四选一：文件/stdin/批量/none）
         obsidian_content = None
         obsidian_batch = kw.get("obsidian_batch")
@@ -792,6 +841,8 @@ if __name__ == "__main__":
             obsidian_content=obsidian_content,
             obsidian_batch=obsidian_batch,
             obsidian_stdin=obsidian_stdin,
+            self_negation=self_negation,
+            empty_chair=empty_chair,
         ))
 
     elif cmd == "dismiss":

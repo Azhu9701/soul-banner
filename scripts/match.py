@@ -211,11 +211,60 @@ def score_soul(soul, task):
     elif ex_risk == "soft":
         score *= 0.5
 
-    # 金魂轻微加权（倾向于选择有方向判断能力的魂）
-    if soul.get("grade") == "金":
-        score *= 1.05
-
     return min(score, 1.0), details
+
+
+def load_usage_counts(registry_path):
+    """从 call-records.yaml 加载每个魂的使用次数。文件不存在则返回空 dict。"""
+    import os as _os
+    records_path = _os.path.join(_os.path.dirname(registry_path), "call-records.yaml")
+    if not _os.path.exists(records_path):
+        return {}
+    try:
+        records = load_yaml(records_path)
+    except Exception:
+        return {}
+    counts = {}
+    for entry in records if isinstance(records, list) else records.get("召唤记录", []):
+        soul = entry.get("魂名") or entry.get("soul") or entry.get("魂", "")
+        if soul:
+            counts[soul] = counts.get(soul, 0) + 1
+    return counts
+
+
+def apply_cognitive_distance(scored_results, usage_counts):
+    """认知距离调整：使用越频繁的魂轻微降权，优先推荐使用者较少接触的魂。
+
+    公式：freshness = 1.0 / (1 + ln(usage + 1))，归一化到 [-0.05, +0.05]
+    使用 0 次的魂 +0.05，使用 20+ 次的魂 -0.05。
+    这不是品质评分——是反消费机制：强迫使用者接触陌生框架。
+    """
+    import math
+    if not usage_counts:
+        return scored_results
+
+    freshness_scores = {}
+    for r in scored_results:
+        usage = usage_counts.get(r["name"], 0)
+        freshness = 1.0 / (1 + math.log(usage + 1))
+        freshness_scores[r["name"]] = freshness
+
+    if not freshness_scores:
+        return scored_results
+
+    vals = list(freshness_scores.values())
+    min_v, max_v = min(vals), max(vals)
+    if max_v == min_v:
+        return scored_results
+
+    for r in scored_results:
+        f = freshness_scores.get(r["name"], 0.5)
+        # 归一化到 [-0.05, +0.05]
+        normalized = (f - min_v) / (max_v - min_v) * 0.10 - 0.05
+        r["score"] = min(round(r["score"] + normalized, 3), 1.0)
+        r["freshness_bonus"] = round(normalized, 3)
+
+    return scored_results
 
 def format_output(results, task, show_gold_review=True):
     """生成 Markdown 格式输出（给幡主审查用）"""
@@ -307,6 +356,10 @@ def main():
                 **{f"match_{k}": v for k, v in details.items()},
                 **details,
             })
+
+    # 认知距离调整：使用越少的魂越优先（反消费机制）
+    usage_counts = load_usage_counts(REGISTRY_PATH)
+    scored = apply_cognitive_distance(scored, usage_counts)
 
     # 排序：排除风险低的优先，同风险按分数
     risk_order = {"none": 0, "soft": 1, "hard": 2}

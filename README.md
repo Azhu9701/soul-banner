@@ -4,7 +4,7 @@
 
 > *"The banner stirs, and souls arrive. Choose a soul by the task, choose a task by the soul. The banner-master wields the banner; no soul oversteps its boundary."*
 
-A **knowledge and thinking-pattern orchestration system**. Collect thinking materials from influential figures, structure them into "soul profiles," and deploy them through four possession modes — with a banner-master preventing dogmatic misapplication.
+A **multi-perspective thinking orchestration system grounded in Marxism-Leninism as its review framework**. Collect thinking materials from influential figures, structure them into "soul profiles," and deploy them through five possession modes — with a six-dimensional review committee (class analysis / scientific methodology / gender analysis / colonial critique / systemic thinking critique / the absent) preventing dogmatic misapplication.
 
 ---
 
@@ -20,7 +20,8 @@ A **knowledge and thinking-pattern orchestration system**. Collect thinking mate
 | `reviews/` | Review reports directory |
 | `references/马斯克.yaml` | Full purple-soul reference example |
 | `refine.py` | Soul refinement helper script |
-| `scripts/` | Search, discipline, audit tool scripts |
+| `scripts/` | Match, experiment, audit, maintenance scripts |
+| `raw/` | Soul capture source materials |
 
 ---
 
@@ -50,7 +51,7 @@ The repo ships with `souls/海绵宝宝.yaml` as a sample soul demonstrating the
 
 ---
 
-## Four Possession Modes
+## Five Possession Modes
 
 | Mode | Trigger | Best for | Flow |
 |------|---------|----------|------|
@@ -60,21 +61,53 @@ The repo ships with `souls/海绵宝宝.yaml` as a sample soul demonstrating the
 | **Chain** | `chain {task} A→B→C` | Multi-stage sequential work | Output of A→input to B→...→final review |
 | **Study** | `study {soulA} vs {soulB}` | Dialectical literacy training | Two souls cross-read→cross-review→banner-master learns |
 
-All modes pass through the banner-master review. A **feedback loop** records effectiveness after each possession.
+Every possession now includes mandatory **anti-consumption rituals** enforced at the code level (`scripts/transact.py`): self-negation check ("Which of my presuppositions was shaken?"), user participation questions, and the empty-chair interrogation ("Whose interests were represented? Whose voice was not heard?"). Three consecutive consumption uses → forced Study mode.
 
 ---
 
-## Banner-Master
+## Review Committee (Six-Dimension Veto)
 
-A spawned gold-soul sub-agent serving as the system's quality control. Injected via `summon_prompt` for independent perspective — not played by the main agent.
+Every soul entry must pass review by a six-dimension committee. Each dimension holds **one-vote veto power**; 3+ vetoes triggers automatic grade review.
 
-- **Pre-possession review**: Does the soul's boundary cover this task?
-- **New soul entry review**: Independent sub-agent grade and boundary review (8 mandatory sections)
-- **Dialectical synthesis**: In council/debate/chain — find consensus, divergence, blind spots, principal contradiction, action plan
+| Dimension | Reviewer | Veto Scope |
+|-----------|----------|------------|
+| Class Analysis | Lenin / Mao / Deng (rotating) | Class blindness, depoliticization |
+| Scientific Methodology | Feynman | Unfalsifiable claims, circular definitions |
+| Gender Analysis | Beauvoir | Gender blindness, patriarchal defaults |
+| Colonial / Race Critique | Fanon | Colonial neglect, Eurocentric framing |
+| Systemic Thinking Critique | Zhuangzi | Classification violence, totality-destroying systematization — asks rather than vetoes: "In what sense is your review a violent classification?" |
+| The Absent | (Empty Chair) | Unrepresentable perspective of the oppressed |
 
-The banner-master role is configurable — choose your most trusted reviewing soul. The system supports a dual-review mechanism (second reviewer triggers when the primary recommends themselves).
+The **Empty Chair** is an institutional marker: every reviewer must answer the question — "How does the absent perspective challenge your dimension's judgment?" Zhuangzi's dimension works by questioning other reviewers' rulings, not by vetoing souls directly.
+
+### Banner-Master
+
+A spawned review sub-agent performing pre-possession review. Injected via `summon_prompt` for independent perspective — not played by the main agent. The system supports dual-review (second reviewer triggers when the primary recommends themselves).
 
 ---
+
+## Current Souls (Samples)
+
+| Soul | Grade | Domain |
+|------|-------|--------|
+| 列宁 | 金 🟡 | Revolutionary theory, Party building, Dialectical materialism |
+| 毛泽东 | 金 🟡 | Revolutionary strategy, Contradiction analysis, Military philosophy |
+| 邓小平 | 金 🟡 | Economic reform, Pragmatic governance |
+| 鲁迅 | 金 🟡 | Cultural critique, National character analysis |
+| 费曼 | 金 🟡 | Scientific methodology, Anti-dogmatism |
+| 波伏娃 | 金 🟡 | Feminist existentialism, Gender analysis |
+| 法农 | 金 🟡 | Colonial critique, Race analysis |
+| 未明子 | 金 🟡 | Ideological critique, Ism-ism framework |
+| 庄子 | 金 🟡 | Anti-system thinking, Instrumental reason critique |
+| 稻盛和夫 | 金 🟡 | Amoeba management, Financial governance |
+| Karpathy | 银 🥈 | AI education, LLM workflow |
+| 黄仁勋 | 银 🥈 | Accelerated computing, AI infrastructure |
+| 马斯克 | 紫 🟣 | Aerospace, EVs, Cross-domain innovation |
+| 罗永浩 | 紫 🟣 | Entrepreneurship, Brand marketing |
+| 乔布斯 | 紫 🟣 | Product design, Consumer electronics |
+| 海绵宝宝 | 蓝 🔵 | Optimism, Craftsmanship, Joyful living |
+
+Includes a **controlled experiment framework** (`scripts/controlled-experiment.py`) for empirically comparing multi-soul council vs. bare-AI vs. human expert performance across task domains.
 
 ## Free & Open
 
@@ -87,6 +120,7 @@ All core features run at **zero extra cost** — no paid APIs required.
 | AI-Pattern Removal | humanizer (pure LLM, no external API) |
 | Knowledge Graph | graphify (optional, pure LLM) |
 | Maintenance Loops | loop (built-in) |
+| Controlled Experiments | scripts/controlled-experiment.py (built-in) |
 
 See [免费使用指南](SKILL.md#免费使用指南) in SKILL.md for details.
 
