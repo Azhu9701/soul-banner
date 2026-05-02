@@ -152,7 +152,7 @@ agent 文件写入 `~/.claude/agents/{魂名}.md`，重启 Claude Code 后即可
 
 每个新炼化的魂必须经幡主**子 agent 独立审查**（8 步仪轨，Task 模板详见 `CLAUDE.md`）。审查 agent 使用 `subagent_type="幡主审查官"`（需在 `agents/` 目录下创建对应的 agent 定义文件）。
 
-审查报告强制板块：审查类型判定 → 审查者前提假设 → 历史结构条件分析 → 肯定方面 → 批判方面 → 金魂(3)条件化判定 → 品级裁定 → 适用边界 → 一致性论证。完整板块说明、反向审查问卷及执行流程见 `auto-possess.md`。
+审查报告强制板块：审查类型判定 → 审查者前提假设 → 历史结构条件分析 → 肯定方面 → 批判方面 → 金魂(3)条件化判定 → 品级裁定 → 适用边界 → 一致性论证 → **框架无效假设检查（必填）→ 审查框架特定性标注（必填）**。完整板块说明、反向审查问卷及执行流程见 `auto-possess.md`。
 
 **审查类型判定**（审查报告第一步）：被审查者是否在世？**封闭档案审查**（已去世——生前档案查证）/**开放实践审查**（在世——3a/3b/3c条件化判定，阶段性结论需标注日期）。用错类型 = 范畴错误。
 
@@ -248,22 +248,20 @@ cmux 将合议/辩论/接力的魂执行阶段**可视化**——每个魂在独
 
 **与传统合议/辩论/接力的区别**：触发词加「可视化」即启用 cmux 模式。不加「可视化」保持传统 Agent spawn。
 
-**核心流程**（cmux pane 调度 Agent 模式）：
+**核心流程**（v3: tail -f 显示器，零 token）：
 
 ```
 预设声明 → match.py → 幡主审查 → cmux-plan.py 生成编排计划
-  → cmux_launch_agents 启动 N 个 cmux pane
-  → 每个 pane 用 Agent(subagent_type="{魂名}") 召唤魂 agent
-  → 魂 agent 分析（summon_prompt 由 agent 系统注入）
-  → 魂 agent 写文件 /tmp/sb-{slug}/{魂名}.md
-  → cmux pane 确认完成
-  → 主 agent Read 所有输出
-  → spawn 辩证综合官（传统 Agent）
+  → mkdir + touch 预创建输出文件
+  → cmux_new_workspace + cmux_new_split 创建 tail -f 显示面板
+  → 主 agent 并行 spawn Agent(subagent_type="{魂名}")（与传统模式完全一致）
+  → 魂 agent 分析 → 写 /tmp/sb-{slug}/{魂名}.md → tail -f pane 实时显示
+  → 主 agent Read 所有输出 → spawn 辩证综合官
   → 使用者参与/自我否定/空椅子
   → transact.py 落盘
 ```
 
-**关键架构**：cmux pane 只做调度（调用 Agent 工具），不直接回答。魂 agent 的 summon_prompt 由 agent 系统自动注入——不是文本粘贴。
+**关键**：cmux pane 是纯显示器（`tail -f`），零 token 消耗零启动延迟。魂分析由主 agent 直接 spawn Agent——与传统模式质量完全一致。
 
 **回退**：cmux 未安装/未运行/魂数 > 6 时自动回退到传统 Agent spawn。
 
