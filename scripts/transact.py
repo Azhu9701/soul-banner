@@ -291,22 +291,15 @@ def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_
                          self_negation="", empty_chair=""):
     """附体结束后：追加 call-records → prompt-audit → Obsidian 存档 → 重生成 lite → 交叉校验
 
-    硬性约束（代码强制层）：
-    - --self-negation 必填：格式为「学习性使用：{预设X被修正}」或「消费性使用：无预设被修正 [第N次连续]」
-    - --empty-chair 必填：使用者的空椅子拷问回答
-    缺少任一参数 → 拒绝落盘。这是从 prompt 层提升到代码强制层的反消费机制。
+    --self-negation 和 --empty-chair 在 Pro 模式为必填（SKILL.md 强制），
+    在 Lite 模式为可选（Lite 分支已精简使用者参与环节）。
+    代码层降级为警告——是否必填由 SKILL.md 决定。
     """
-    # 硬性检查：自我否定环节和空椅子拷问（代码强制，不可跳过）
+    # 软检查：Lite 模式下 --self-negation 和 --empty-chair 可选
     if not self_negation or not self_negation.strip():
-        print("❌ 拒绝落盘：缺少 --self-negation 参数", file=sys.stderr)
-        print("   这是从 prompt 层提升到代码层的硬约束。", file=sys.stderr)
-        print("   必须回答：哪个预设被这次附体动摇了？（学习性使用/消费性使用 + 说明）", file=sys.stderr)
-        return 1
+        print("  ⚠ 未提供 --self-negation（Lite 模式下可选，Pro 模式由 SKILL.md 强制）", file=sys.stderr)
     if not empty_chair or not empty_chair.strip():
-        print("❌ 拒绝落盘：缺少 --empty-chair 参数", file=sys.stderr)
-        print("   这是从 prompt 层提升到代码层的硬约束。", file=sys.stderr)
-        print("   必须回答：在这次分析中，谁的利益被代表？谁的发言权没有被给？", file=sys.stderr)
-        return 1
+        print("  ⚠ 未提供 --empty-chair（Lite 模式下可选，Pro 模式由 SKILL.md 强制）", file=sys.stderr)
 
     # 检测消费性使用模式：notes 中记录连续消费次数
     import re as _re
@@ -403,7 +396,9 @@ def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_
 
     # 7. 消费性使用检测
     print("\n[7/7] 消费性使用追踪...")
-    if consecutive_consumption >= 3:
+    if not self_negation or not self_negation.strip():
+        print(f"  · 未提供自我否定（Lite 模式）")
+    elif consecutive_consumption >= 3:
         print(f"  ⚠️  连续 {consecutive_consumption} 次消费性使用 → 下一轮强制幡主学习模式")
     elif "消费性使用" in self_negation:
         print(f"  消费性使用 ({consecutive_consumption}/3 次连续)")
@@ -703,8 +698,8 @@ USAGE = """用法:
   python3 scripts/transact.py refine-close <魂名>
   python3 scripts/transact.py review-apply <魂名> --review-file <路径> [--verdict "..."] [--grade 金] [--reviewer 列宁]
   python3 scripts/transact.py possession-close <魂名> --mode <模式> --task <任务> --effectiveness <有效|部分有效|无效>
-        --self-negation "<学习性使用/消费性使用 + 说明>" --empty-chair "<使用者的空椅子回答>"
-        [--notes "..."] [--obsidian-content <文件> | --obsidian-batch <manifest.json> | --obsidian-stdin]
+        [--self-negation "<...>"] [--empty-chair "<...>"] [--notes "..."]
+        [--obsidian-content <文件> | --obsidian-batch <manifest.json> | --obsidian-stdin]
   python3 scripts/transact.py dismiss <魂名> [--reason "..."]
   python3 scripts/transact.py obsidian-sync [--souls 鲁迅,费曼] [--reviews-only] [--dry-run]
   python3 scripts/transact.py meeting-prep
