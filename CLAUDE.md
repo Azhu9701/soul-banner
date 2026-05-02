@@ -148,6 +148,137 @@ Agent(
 ```
 审查 prompt 中必须包含「**禁止读取任何文件**」，且预筛选结果使用 `--no-gold-review` 精简版。
 
+## cmux 可视化模式（实验性，feature/cmux-integration 分支）
+
+**状态**：实验阶段。仅在合议/辩论/接力模式的附体执行阶段使用 cmux 可视化，匹配审查和辩证综合仍使用传统 Agent spawn。
+
+**前置检查**：使用 cmux 模式前，主 agent 必须检查 cmux 是否运行：
+```
+mcp__cmux-agent-mcp__cmux_status → running: true
+```
+不可用时回退到传统 Agent spawn 模式，并在报告中注明「cmux 不可用，回退传统模式」。
+
+### cmux 附体流程
+
+**1. 生成编排计划**：
+```bash
+python3 scripts/cmux-plan.py \
+  --task "{任务描述}" \
+  --souls {魂A},{魂B},{魂C} \
+  --mode {conference|debate|relay} \
+  --era "{时代背景补充}" \
+  -o /tmp/cmux-plan.json
+```
+
+**2. 创建 cmux workspace 并启动魂 pane**：
+读 `/tmp/cmux-plan.json`，使用其中的参数调用：
+```
+cmux_launch_agents(
+  cli="claude",
+  count=N,
+  workspace_name="{workspace_name}",
+  assignments=[...],    # 来自 plan JSON
+  tab_names=[...],      # 来自 plan JSON
+  status={...},         # 来自 plan JSON
+  progress=0.3,
+  progress_label="{progress_label}"
+)
+```
+
+**3. 监控魂进度**：
+定期 `cmux_read_all` 检查各魂状态。设置状态标记：
+```
+cmux_set_status(key="{魂名}", value="分析中")
+cmux_set_status(key="{魂名}", value="已完成")
+```
+当所有魂输出稳定（不再增长或出现明确结论标记），设置 `cmux_set_progress(0.7)`。
+
+**4. 收集魂输出**：
+```
+cmux_read_all_deep(query="请用中文简要总结你的核心结论（200字以内）。完整分析请保留在上下文中。")
+```
+将每个魂的输出写入 `/tmp/sb-{任务}/{魂名}.md`（逐字复制，禁止改写）。**注意**：cmux_read_all_deep 返回摘要而非完整输出，主 agent 需通过 cmux_send 请求每个魂输出完整分析（「请输出你的完整分析结果」），然后从 cmux_read_screen 获取完整内容。若完整输出过长，可让魂自行 Write 到 `/tmp/sb-{任务}/{魂名}.md`。
+
+**5. 辩证综合**：spawn `subagent_type="辩证综合官"`，读文件做五步综合。与传统模式相同。
+
+**6. 清理**：`cmux_set_progress(1.0)`。默认保留 workspace 供使用者回顾，不自动关闭。若需关闭：`cmux_close_workspace`。
+
+### cmux 辩论模式特殊流程
+
+两魂各输出立论后，主 agent 进行论点交换：
+1. `cmux_read_all_deep` 获取双方立论
+2. 用 `cmux_orchestrate` 将对方论点注入：
+   ```
+   cmux_orchestrate(assignments=[
+     {surface: "{正方surface}", text: "反方论点如下：\n{反方立论摘要}\n\n请反驳。"},
+     {surface: "{反方surface}", text: "正方论点如下：\n{正方立论摘要}\n\n请反驳。"}
+   ])
+   ```
+3. 等待双方完成反驳 → 再次收集输出 → 写文件
+
+### cmux 接力模式特殊流程
+
+魂按序启动：
+1. 所有魂先启动，但只有第 1 棒立即获得任务 prompt
+2. 第 1 棒完成后 → `cmux_read_all_deep` 获取输出
+3. 用 `cmux_orchestrate` 向第 2 棒发送：`上一位（{魂A}）的分析结果：\n{输出}\n\n请基于此继续分析。`
+4. 重复至最后一棒
+5. 收集所有输出 → 写文件 → spawn 衔接点审查
+
+### 实时质询
+
+在魂分析过程中（步骤 3），使用者可随时提出质询。主 agent 使用 `cmux_broadcast`：
+```
+cmux_broadcast(text="使用者质询：{质询内容}\n\n请在当前分析中回应此质询。")
+```
+质询回应随魂输出一同收集，追加至 Obsidian 存档。
+
+### cmux 魂 prompt 格式
+
+通过 cmux 启动的魂是独立 Claude CLI 实例，prompt 直接包含 summon_prompt（不经过 Agent 机制）：
+
+```
+{任务描述}
+
+{魂的 summon_prompt（从 souls/{魂名}.yaml 提取）}
+
+## 时代背景
+你被召唤到2026年的中国。此时：
+- 互联网平台（微博、抖音、小红书、微信）是主要的公共话语空间
+- 算法推荐以互动率为核心指标，争议性内容获得不成比例的曝光
+- {与任务相关的2-3条当代环境说明}
+
+你的分析对象生活在此时此地。请在分析中注意你自身时代的局限。
+
+## 输出要求
+请在分析完成后，将你的完整分析结果写入 /tmp/sb-{任务}/{魂名}.md。这将用于后续的辩证综合。
+
+---
+本魂基于{炼化日期}收魂素材炼化。这不是{魂名}本人——这是基于其公开文本的 AI 模拟。
+```
+
+### cmux 模式与传统模式差异
+
+| 项目 | 传统 Agent spawn | cmux 可视化 |
+|------|-----------------|------------|
+| 魂运行 | `Agent(subagent_type="{魂名}")` | cmux pane 独立 CLI |
+| summon_prompt | Agent 文件自动注入 | cmux-plan.py 手动拼接 |
+| 思考过程 | 不可见 | **实时可见** |
+| 质询时机 | 事后（辩证综合后） | **事中**（魂分析时广播） |
+| 状态追踪 | Task 列表 | 进度条 + 状态栏 |
+| 输出收集 | Agent 返回结果 | cmux_read_all + Write 文件 |
+| 回退机制 | — | cmux 不可用时自动回退 |
+
+### 回退规则
+
+以下情况自动回退到传统 Agent spawn 模式：
+- cmux 未安装（`installed: false`）
+- cmux 未运行（`running: false`）
+- cmux_launch_agents 失败（超时或报错）
+- 魂数量 > 6（cmux pane 过多影响可读性）
+
+回退时主 agent 在附体报告中注明回退原因。
+
 ### 事务脚本（transact.py）— 落盘自动化
 
 所有落盘操作统一通过 `scripts/transact.py` 子命令执行，**禁止**主 agent 手写 heredoc Python 更新文件。
