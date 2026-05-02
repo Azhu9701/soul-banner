@@ -123,7 +123,7 @@ Originally 万魂幡 ("Banner of Ten Thousand Souls"). One character changed —
 
 ## Related Repos
 
-- **[soul-banner-lite](https://github.com/Azhu9701/soul-banner-lite)** — Minimalist edition. ~300-1400 chars. No review committee. Just spawn, read, judge.
+- **[soul-banner-lite](https://github.com/Azhu9701/soul-banner-lite)** — Anti-consumption edition. Self-negation + empty chair + 3x consumption lockout. No review committee. Just spawn, read, judge.
 - **[soul-banner-pro](https://github.com/Azhu9701/soul-banner-pro)** — Archived full edition snapshot.
 
 ---
