@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""万魂幡灵识层 — UserPromptSubmit Hook
+"""万民幡灵识层 — UserPromptSubmit Hook
 
 三级递进匹配：
   一级：命令词精确命中（11个）
@@ -73,11 +73,11 @@ def load_soul_names():
         names = [s["name"] for s in data.get("魂魄", [])]
         if names:
             return names
-        print(json.dumps({"systemMessage": "【万魂幡警告】registry.yaml 中无魂魄记录"}), file=sys.stderr)
+        print(json.dumps({"systemMessage": "【万民幡警告】registry.yaml 中无魂魄记录"}), file=sys.stderr)
     except FileNotFoundError:
-        print(json.dumps({"systemMessage": "【万魂幡警告】registry.yaml 不存在，Level 2 匹配已跳过"}), file=sys.stderr)
+        print(json.dumps({"systemMessage": "【万民幡警告】registry.yaml 不存在，Level 2 匹配已跳过"}), file=sys.stderr)
     except Exception as e:
-        print(json.dumps({"systemMessage": f"【万魂幡警告】加载 registry 失败: {e}"}), file=sys.stderr)
+        print(json.dumps({"systemMessage": f"【万民幡警告】加载 registry 失败: {e}"}), file=sys.stderr)
     return []
 
 
@@ -127,7 +127,7 @@ def check_exclude(prompt: str) -> bool:
 
 def build_system_message(match_reason: str) -> str:
     return (
-        f"【万魂幡自主触发】检测到匹配模式：{match_reason}。\n\n"
+        f"【万民幡自主触发】检测到匹配模式：{match_reason}。\n\n"
         "必须立即调用 Skill(soul-banner)：\n"
         "1. 本技能提供主 agent 无法自行实现的三种能力："
         "并行 spawn 独立子 agent（不同人物思维框架注入）、"

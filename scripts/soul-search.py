@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""万魂幡收魂搜索脚本 — 通过 tmwd-bridge 在百度/Bing/Google 搜索 8 维度素材."""
+"""万民幡收魂搜索脚本 — 通过 tmwd-bridge 在百度/Bing/Google 搜索 8 维度素材."""
 
 import sys, time, random, json, os
 
@@ -167,7 +167,7 @@ def collect(name, output_dir=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="万魂幡收魂搜索")
+    parser = argparse.ArgumentParser(description="万民幡收魂搜索")
     parser.add_argument("name", help="人物名")
     parser.add_argument("-o", "--output", help="输出目录", default=None)
     parser.add_argument("--engine", help="搜索引擎后端", choices=SEARCH_BACKENDS, default="tmwd-bridge")

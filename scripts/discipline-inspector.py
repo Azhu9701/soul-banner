@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""万魂幡自动纠察队 — PostToolUse Hook
+"""万民幡自动纠察队 — PostToolUse Hook
 
 检测主 agent 的违规行为：
   1. 主 agent 自行模拟多视角分析（没有 spawn 魂却有分析行为）
@@ -92,7 +92,7 @@ SKIP_LENIN_PATTERNS = [
 
 # === 豁免模式 ===
 # 只有明确的 Skill(soul-banner) 调用或 spawn 魂的行为才豁免。
-# 裸词 "万魂幡" / "soul-banner" 不再豁免 —— 提及不等于执行。
+# 裸词 "万民幡" / "soul-banner" 不再豁免 —— 提及不等于执行。
 
 EXEMPTION_PATTERNS = [
     # 明确调用 Skill
@@ -173,7 +173,7 @@ def log_violation(violation_type: str, detail: str, evidence: str, is_warning: b
 
     if not is_warning:
         msg = (
-            f"【万魂幡纠察队】检测到疑似违规：[{violation_type}]\n"
+            f"【万民幡纠察队】检测到疑似违规：[{violation_type}]\n"
             f"  {detail}\n\n"
             f"  提示：\n"
             f"  - 涉及多视角分析或辩证综合时，请调用 Skill(soul-banner) 并 spawn 列宁审查\n"
@@ -206,7 +206,7 @@ def find_patterns(text: str, patterns: list[str]) -> list[str]:
 
 def check_exemptions(text: str) -> bool:
     """只在明确调用 Skill(soul-banner) 或 spawn 魂时豁免。
-    裸词'万魂幡'/'soul-banner'不再豁免——提及不等于执行。"""
+    裸词'万民幡'/'soul-banner'不再豁免——提及不等于执行。"""
     for pattern in EXEMPTION_PATTERNS:
         if re.search(pattern, text):
             return True

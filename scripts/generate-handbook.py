@@ -74,21 +74,8 @@ def extract_topic(task):
     return "·".join(top) if top else "未分类"
 
 
-def main():
-    out_file = None
-    compact = False
-    args = sys.argv[1:]
-    i = 0
-    while i < len(args):
-        if args[i] == "-o" and i + 1 < len(args):
-            out_file = args[i + 1]
-            i += 2
-        elif args[i] == "--compact":
-            compact = True
-            i += 1
-        else:
-            i += 1
-
+def generate_handbook(out_file=None, compact=False):
+    """从 call-records 生成匹配手册，返回生成的文本。若指定 out_file 则写入文件。"""
     cr = load_yaml(CALL_RECORDS_PATH)
     records = cr.get("records", []) + cr.get("召唤记录", [])
     registry = load_yaml(REGISTRY_PATH)
@@ -290,7 +277,26 @@ def main():
         size = len(output.encode('utf-8'))
         est_tokens = size // 4
         print(f"✅ 手册: {out_file} ({size}B, ~{est_tokens} tokens)")
-    else:
+    return output
+
+
+def main():
+    out_file = None
+    compact = False
+    args = sys.argv[1:]
+    i = 0
+    while i < len(args):
+        if args[i] == "-o" and i + 1 < len(args):
+            out_file = args[i + 1]
+            i += 2
+        elif args[i] == "--compact":
+            compact = True
+            i += 1
+        else:
+            i += 1
+
+    output = generate_handbook(out_file=out_file, compact=compact)
+    if not out_file:
         print(output)
         size = len(output.encode('utf-8'))
         print(f"\n*({size}B, ~{size//4} tokens)*", file=sys.stderr)

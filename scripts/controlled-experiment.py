@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""万魂幡对照实验框架 — 费曼式 4 条件 × N 任务 × 盲评设计
+"""万民幡对照实验框架 — 费曼式 4 条件 × N 任务 × 盲评设计
 
 条件：
-  A: 万魂幡合议（匹配3魂合议 + 辩证综合官）
+  A: 万民幡合议（匹配3魂合议 + 辩证综合官）
   B: 裸AI（同底层模型，等token预算，单次推理）
   C: 多步推理裸AI（同底层模型，等token预算，多步推理但无魂prompt注入）
   D: 人类专家基线
@@ -130,9 +130,9 @@ def generate_condition_config(task_id, condition, tasks_path=None):
 
     configs = {
         "A": {
-            "description": "万魂幡合议",
+            "description": "万民幡合议",
             "method": "match.py 预筛选 → 幡主审查 → 3魂合议 → 辩证综合官",
-            "prompt_template": "使用万魂幡合议模式分析以下问题：{task}",
+            "prompt_template": "使用万民幡合议模式分析以下问题：{task}",
             "constraints": [
                 "必须走完整 match.py → 幡主审查 → 3魂并行 → 辩证综合官流程",
                 "辩证综合官只接收文件路径，不接收内容",
@@ -170,7 +170,7 @@ def generate_condition_config(task_id, condition, tasks_path=None):
             "method": "由领域相关的人类专家独立分析，记录输出",
             "prompt_template": "【人类专家任务】请分析以下问题：{task}",
             "constraints": [
-                "专家不能是万魂幡设计者或使用者",
+                "专家不能是万民幡设计者或使用者",
                 "专家需具备该领域的专业资质",
                 "记录专家的领域背景",
             ],
@@ -308,7 +308,7 @@ def compute_stats(results_dir=None, map_file=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="万魂幡对照实验框架")
+    parser = argparse.ArgumentParser(description="万民幡对照实验框架")
     sub = parser.add_subparsers(dest="command")
 
     gen = sub.add_parser("generate", help="生成实验任务池")

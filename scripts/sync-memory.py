@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""万魂幡 Memory 同步脚本
+"""万民幡 Memory 同步脚本
 
 从 registry.yaml + call-records.yaml 自动生成 project memory 缓存文件，
 保持 memory 与数据源一致。解决手动维护导致漂移的问题。
@@ -9,7 +9,7 @@
   python3 scripts/sync-memory.py --sync     # 同步 memory（覆盖写入）
   python3 scripts/sync-memory.py --diff     # 显示当前 registry 与 memory 差异
 
-由健康检查自动触发，也可手动运行。
+v2.0 — 三维标签体系（品级已废弃）。
 """
 
 import os
@@ -23,12 +23,8 @@ CALL_RECORDS_PATH = os.path.join(SKILL_DIR, "call-records.yaml")
 MEMORY_DIR = os.path.join(os.path.expanduser("~"), ".claude/projects/-Users-huyi/memory")
 CACHE_PATH = os.path.join(MEMORY_DIR, "project_soul_banner_registry_cache.md")
 
-GRADE_ORDER = {'金': 5, '银': 4, '紫': 3, '蓝': 2, '绿': 1, '白': 0}
-GRADE_SYMBOL = {'金': '🟡', '银': '🥈', '紫': '🟣', '蓝': '🔵', '绿': '🟢', '白': '⚪'}
-
 
 def load_data():
-    """加载 registry 和召唤记录"""
     try:
         import yaml
     except ImportError:
@@ -49,17 +45,29 @@ def load_data():
 
 
 def build_cache(souls, records, timestamp):
-    """从数据源构建 memory 缓存内容"""
-    # 品级分布
-    grades = {}
-    for s in souls:
-        g = s.get("grade", "?")
-        grades[g] = grades.get(g, 0) + 1
+    n = len(souls)
 
-    grade_lines = []
-    for g in sorted(grades, key=lambda x: -GRADE_ORDER.get(x, 0)):
-        names = [s["name"] for s in souls if s.get("grade") == g]
-        grade_lines.append(f"{GRADE_SYMBOL.get(g, '')} {g}魂({grades[g]}): {', '.join(names)}")
+    # 三维标签分布
+    sufficiency = {"充分": [], "中等": [], "不足": []}
+    transferability = {"可传输": [], "嵌入型": [], "人格型": []}
+    function_domains = Counter()
+    for s in souls:
+        sf = s.get("info_sufficiency", "?")
+        sufficiency.setdefault(sf, []).append(s["name"])
+        mt = s.get("methodology_transferability", "?")
+        transferability.setdefault(mt, []).append(s["name"])
+        for fd in s.get("function_domains", []):
+            function_domains[fd] += 1
+
+    suf_lines = []
+    for k in ["充分", "中等", "不足"]:
+        if sufficiency.get(k):
+            suf_lines.append(f"**{k}**({len(sufficiency[k])}): {', '.join(sufficiency[k])}")
+    mt_lines = []
+    for k in ["可传输", "嵌入型", "人格型"]:
+        if transferability.get(k):
+            mt_lines.append(f"**{k}**({len(transferability[k])}): {', '.join(transferability[k])}")
+    fd_str = ", ".join(f"{k}({v})" for k, v in function_domains.most_common())
 
     # 召唤统计
     counts = Counter(r.get("soul") for r in records if isinstance(r, dict) and "soul" in r)
@@ -73,22 +81,26 @@ def build_cache(souls, records, timestamp):
             eff_summary[name] = {"有效": 0, "部分有效": 0, "无效": 0}
         eff_summary[name][eff] = eff_summary[name].get(eff, 0) + 1
 
-    # 魂魄表格
+    # 快速参考表 — 按信息充分度 + 召唤次数排序
+    def sort_key(s):
+        sf_rank = {"充分": 0, "中等": 1, "不足": 2}.get(s.get("info_sufficiency", ""), 3)
+        return (sf_rank, -counts.get(s.get("name", ""), 0), s.get("name", ""))
+
     table_rows = []
-    for s in sorted(souls, key=lambda x: (-GRADE_ORDER.get(x.get("grade", "白"), 0), x.get("name", ""))):
+    for s in sorted(souls, key=sort_key):
         name = s.get("name", "?")
-        grade = s.get("grade", "?")
-        symbol = GRADE_SYMBOL.get(grade, "")
+        fds = ", ".join(s.get("function_domains", []))
+        mt = s.get("methodology_transferability", "?")
         domains = ", ".join(s.get("domain", [])[:3])
         exclude = s.get("trigger_exclude_summary", "")
         if exclude and len(exclude) > 40:
             exclude = exclude[:40] + "..."
-        table_rows.append(f"| {name} | {symbol}{grade} | {domains} | {exclude} |")
+        table_rows.append(f"| {name} | {fds} | {mt} | {domains} | {exclude} |")
 
-    # 召唤统计表
+    # 召唤统计表 — 按召唤次数降序
     summon_rows = []
     zero_summons = []
-    for s in sorted(souls, key=lambda x: (-GRADE_ORDER.get(x.get("grade", "白"), 0), x.get("name", ""))):
+    for s in sorted(souls, key=lambda x: (-counts.get(x.get("name", ""), 0), x.get("name", ""))):
         name = s.get("name", "?")
         count = counts.get(name, 0)
         if count > 0:
@@ -105,21 +117,23 @@ def build_cache(souls, records, timestamp):
         summon_rows.append(f"| {'/'.join(zero_summons)} | 0 | — |")
 
     cache = f"""---
-name: 万魂幡 Registry 热缓存
-description: 16 魂摘要缓存——用于简单查询和匹配阶段，避免每次读取完整 registry.yaml。由 scripts/sync-memory.py 自动维护。
+name: 万民幡 Registry 热缓存
+description: {n} 魂摘要缓存——用于简单查询和匹配阶段，避免每次读取完整 registry.yaml。v2.0 三维标签体系，品级已废弃。由 scripts/sync-memory.py 自动维护。
 type: project
 ---
 
 > **自动生成于 {timestamp}。** 此文件由 `scripts/sync-memory.py --sync` 从 `registry.yaml` 生成。
 
-## 品级分布
+## 三维标签分布
 
-{chr(10).join(grade_lines)}
+**信息充分度**: {', '.join(suf_lines)}
+**方法论可传输度**: {', '.join(mt_lines)}
+**功能域标签**: {fd_str}
 
 ## 快速参考
 
-| 魂 | 品级 | 关键领域 | 排除场景 |
-|------|------|------|------|
+| 魂 | 功能域 | 方法论 | 关键领域 | 排除场景 |
+|------|------|------|------|------|
 {chr(10).join(table_rows)}
 
 ## 召唤统计
@@ -135,7 +149,6 @@ type: project
 
 
 def check_staleness():
-    """检查 memory 缓存是否比 registry 旧"""
     if not os.path.exists(CACHE_PATH):
         return True, "缓存文件不存在"
 
@@ -146,13 +159,12 @@ def check_staleness():
     if reg_mtime > cache_mtime:
         return True, f"registry.yaml 已更新 ({datetime.fromtimestamp(reg_mtime).strftime('%H:%M:%S')} > {datetime.fromtimestamp(cache_mtime).strftime('%H:%M:%S')})"
     if records_mtime > cache_mtime:
-        return True, f"call-records.yaml 已更新"
+        return True, "call-records.yaml 已更新"
 
     return False, "缓存有效"
 
 
 def show_diff():
-    """显示当前数据源与 memory 缓存的差异"""
     souls, records = load_data()
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     new_cache = build_cache(souls, records, timestamp)
@@ -180,7 +192,6 @@ def show_diff():
 
 
 def do_sync():
-    """执行同步"""
     souls, records = load_data()
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     cache = build_cache(souls, records, timestamp)

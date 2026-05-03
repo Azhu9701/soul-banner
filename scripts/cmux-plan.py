@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cmux × 万魂幡 编排计划生成器 v4
+"""cmux × 万民幡 编排计划生成器 v4
 
 架构：cmux_launch_agents 启动 N 个 Claude CLI，每个 CLI 只做一件事 ——
 用 Agent(subagent_type="{魂名}") 召唤魂 agent。~500 token/pane 调度开销。
@@ -130,7 +130,7 @@ def plan(mode: str, task: str, soul_names: list[str], era_extra: str, slug: str)
 
 
 def main():
-    p = argparse.ArgumentParser(description="cmux × 万魂幡 v4")
+    p = argparse.ArgumentParser(description="cmux × 万民幡 v4")
     p.add_argument("--task", required=True)
     p.add_argument("--souls", required=True)
     p.add_argument("--mode", choices=["conference", "debate", "relay"], default="conference")

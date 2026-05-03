@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""万魂幡 Registry 健康检查
+"""万民幡 Registry 健康检查
 
 检查项：
   1. 是否有魂从未被召唤（trigger 可能太窄）
@@ -28,6 +28,24 @@ LOG_FILE = os.path.join(SKILL_DIR, "logs", "registry-health-check.log")
 LAST_RUN_FILE = os.path.join(SKILL_DIR, "logs", "health-check-last-run.txt")
 
 STALE_THRESHOLD_DAYS = 90
+
+def _parse_refined_date(refined_at):
+    """解析 refined_at 字段，返回 timezone-aware datetime 或 None"""
+    if not refined_at:
+        return None
+    try:
+        if hasattr(refined_at, 'strftime'):
+            dt = datetime.combine(refined_at, datetime.min.time())
+            return dt.replace(tzinfo=timezone.utc)
+        if isinstance(refined_at, str):
+            for fmt in ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]:
+                try:
+                    return datetime.strptime(refined_at.strip()[:19], fmt).replace(tzinfo=timezone.utc)
+                except ValueError:
+                    continue
+    except (ValueError, TypeError):
+        pass
+    return None
 HIGH_SUMMON_THRESHOLD = 5
 DECAY_CONSECUTIVE_NO_EFFECT = 5   # 连续N次无「有效」→ 召唤限制
 DECAY_ZERO_SUMMON_DAYS = 90       # 连续N天零召唤 → 散魂警告
@@ -83,12 +101,12 @@ def check_never_summoned(souls: list[dict], counts: Counter) -> list[dict]:
         if name not in counts or counts[name] == 0:
             trigger = s.get("trigger_keywords_summary", "N/A")
             scenarios = s.get("trigger_scenarios_summary", "N/A")
-            grade = s.get("grade", "?")
+            func_doms = s.get("function_domains", [])
             domains = s.get("domain", [])
 
             # 生成推荐信息
             recommendation = _build_zero_summon_recommendation(
-                name, grade, domains, scenarios, souls
+                name, func_doms, domains, scenarios, souls
             )
 
             issues.append(
@@ -96,7 +114,7 @@ def check_never_summoned(souls: list[dict], counts: Counter) -> list[dict]:
                     "soul": name,
                     "type": "never_summoned",
                     "summoned_count": 0,
-                    "grade": grade,
+                    "function_domains": func_doms,
                     "domains": domains,
                     "trigger_summary": trigger[:100] if trigger else "N/A",
                     "scenarios": scenarios if scenarios else "N/A",
@@ -107,9 +125,8 @@ def check_never_summoned(souls: list[dict], counts: Counter) -> list[dict]:
     return issues
 
 
-def _build_zero_summon_recommendation(name: str, grade: str, domains: list[str], scenarios: str, all_souls: list[dict]) -> dict:
+def _build_zero_summon_recommendation(name: str, func_doms: list[str], domains: list[str], scenarios: str, all_souls: list[dict]) -> dict:
     """为零召唤魂生成推荐：适用场景、兼容魂配对、推荐任务类型"""
-    # 基于领域兼容性找配对魂
     paired_souls = []
     for other in all_souls:
         other_name = other.get("name", "?")
@@ -119,7 +136,6 @@ def _build_zero_summon_recommendation(name: str, grade: str, domains: list[str],
         my_domains = set(domains)
         overlap = my_domains & other_domains
         complement = other_domains - my_domains
-        # 有交集但非完全重叠 = 互补
         if overlap and complement:
             paired_souls.append({
                 "soul": other_name,
@@ -128,27 +144,14 @@ def _build_zero_summon_recommendation(name: str, grade: str, domains: list[str],
                 "rationale": f"{other_name}的{'、'.join(sorted(complement)[:3])}补充本魂视角"
             })
 
-    # 按互补领域数排序，取前3
     paired_souls.sort(key=lambda x: len(x["complement_domains"]), reverse=True)
     top_pairs = paired_souls[:3]
 
-    # 推荐任务类型
-    task_types = []
-    if grade == "金":
-        task_types = [
-            f"合议任务中纳入{name}——其金魂视角可能发现其他魂的集体盲区",
-            f"用{name}审查幡中现有分析的{domains[0] if domains else '核心'}盲区",
-            f"以{name}为辩论反方，挑战幡主既有判断的{domains[0] if domains else '核心'}前提"
-        ]
-    elif grade in ("银", "紫"):
-        task_types = [
-            f"用{name}分析涉及{'/'.join(domains[:2]) if domains else '其领域'}的常规任务",
-            f"合议中让{name}和互补金魂配对（{'、'.join([p['soul'] for p in top_pairs[:2]]) if top_pairs else '金魂'}）"
-        ]
-    else:
-        task_types = [
-            f"在涉及{'/'.join(domains[:2]) if domains else '其领域'}的轻量任务中试用{name}"
-        ]
+    dom_str = '+'.join(func_doms) if func_doms else '?'
+    task_types = [
+        f"在涉及{'/'.join(domains[:2]) if domains else '其领域'}的任务中使用{name}（{dom_str}）",
+        f"合议中让{name}和互补魂配对（{'、'.join([p['soul'] for p in top_pairs[:2]]) if top_pairs else '无'}）"
+    ]
 
     return {
         "scenarios": scenarios if scenarios else "N/A",
@@ -160,9 +163,7 @@ def _build_zero_summon_recommendation(name: str, grade: str, domains: list[str],
         ],
         "suggested_task_types": task_types,
         "zero_summon_risk": (
-            f"金魂零召唤超过30天——视角持续缺失，幡的系统性盲区正在固化"
-            if grade == "金" else
-            f"{grade}魂零召唤——该领域视角未激活"
+            f"{dom_str}功能域魂零召唤——该领域视角未激活"
         )
     }
 
@@ -203,26 +204,12 @@ def check_stale_refinement(souls: list[dict], threshold_days: int = STALE_THRESH
             issues.append({"soul": name, "type": "no_refined_at", "detail": "缺少 refined_at 字段"})
             continue
 
-        try:
-            if hasattr(refined_at, 'strftime'):
-                dt = datetime.combine(refined_at, datetime.min.time())
-                dt = dt.replace(tzinfo=timezone.utc)
-            elif isinstance(refined_at, str):
-                parsed = None
-                for fmt in ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]:
-                    try:
-                        parsed = datetime.strptime(refined_at.strip()[:19], fmt)
-                        break
-                    except ValueError:
-                        continue
-                if parsed is None:
-                    issues.append({"soul": name, "type": "unparseable_refined_at", "detail": f"无法解析 refined_at: {refined_at}"})
-                    continue
-                dt = parsed.replace(tzinfo=timezone.utc)
-            else:
-                continue
+        dt = _parse_refined_date(refined_at)
+        if dt is None:
+            issues.append({"soul": name, "type": "unparseable_refined_at", "detail": f"无法解析 refined_at: {refined_at}"})
+            continue
 
-            if dt < cutoff:
+        if dt < cutoff:
                 days_ago = (now - dt).days
                 issues.append(
                     {
@@ -233,9 +220,6 @@ def check_stale_refinement(souls: list[dict], threshold_days: int = STALE_THRESH
                         "detail": f"上次炼化距今 {days_ago} 天，超过阈值 {threshold_days} 天",
                     }
                 )
-        except Exception:
-            pass
-
     return issues
 
 
@@ -279,7 +263,8 @@ def check_decay(souls: list[dict], global_records: list[dict], counts: Counter) 
 
     for s in souls:
         name = s.get("name", "?")
-        grade = s.get("grade", "?")
+        func_doms = s.get("function_domains", [])
+        info_suf = s.get("info_sufficiency", "?")
         records = soul_records.get(name, [])
 
         # 1) 连续低效检测
@@ -299,7 +284,7 @@ def check_decay(souls: list[dict], global_records: list[dict], counts: Counter) 
                 issues.append({
                     "soul": name,
                     "type": "decay_low_effectiveness",
-                    "grade": grade,
+                    "function_domains": func_doms,
                     "consecutive_no_effect": consecutive_no_effect,
                     "detail": (
                         f"连续 {consecutive_no_effect} 次附体无「有效」评级 → "
@@ -311,57 +296,46 @@ def check_decay(souls: list[dict], global_records: list[dict], counts: Counter) 
         # 2) 长期零召唤检测
         count = counts.get(name, 0)
         if count == 0:
-            refined_at = s.get("refined_at", "")
-            if refined_at:
-                try:
-                    if isinstance(refined_at, str):
-                        dt = datetime.strptime(refined_at.strip()[:10], "%Y-%m-%d")
-                        dt = dt.replace(tzinfo=timezone.utc)
-                        days_since_refine = (now - dt).days
-                        if days_since_refine >= DECAY_ZERO_SUMMON_DAYS:
-                            issues.append({
-                                "soul": name,
-                                "type": "decay_zero_summon",
-                                "grade": grade,
-                                "days_since_refined": days_since_refine,
-                                "detail": (
-                                    f"炼化 {days_since_refine} 天，零召唤 → "
-                                    f"触发散魂警告：建议触发条件复审，仍无改善则强制散魂"
-                                ),
-                                "recommended_action": (
-                                    "1) 调整 trigger 条件扩大匹配 "
-                                    "2) 手动试用 1-2 次 "
-                                    "3) 30天后仍零召唤 → 强制散魂（保留 raw 素材）"
-                                ),
-                            })
-                except (ValueError, TypeError):
-                    pass
+            dt = _parse_refined_date(s.get("refined_at", ""))
+            if dt:
+                days_since_refine = (now - dt).days
+                if days_since_refine >= DECAY_ZERO_SUMMON_DAYS:
+                    issues.append({
+                        "soul": name,
+                        "type": "decay_zero_summon",
+                        "function_domains": func_doms,
+                        "info_sufficiency": info_suf,
+                        "days_since_refined": days_since_refine,
+                        "detail": (
+                            f"炼化 {days_since_refine} 天，零召唤 → "
+                            f"触发散魂警告：建议触发条件复审，仍无改善则强制散魂"
+                        ),
+                        "recommended_action": (
+                            "1) 调整 trigger 条件扩大匹配 "
+                            "2) 手动试用 1-2 次 "
+                            "3) 30天后仍零召唤 → 强制散魂（保留 raw 素材）"
+                        ),
+                    })
 
         # 3) 方法论前提被历史证伪检测（标记——需人工判断）
-        # 此检测标记可能的候选，由审查委员会裁定
-        # 当前标记逻辑：金魂且零召唤且炼化超过 180 天
-        if grade == "金" and count == 0:
-            refined_at = s.get("refined_at", "")
-            if refined_at:
-                try:
-                    if isinstance(refined_at, str):
-                        dt = datetime.strptime(refined_at.strip()[:10], "%Y-%m-%d")
-                        dt = dt.replace(tzinfo=timezone.utc)
-                        days_since_refine = (now - dt).days
-                        if days_since_refine >= 180:
-                            issues.append({
-                                "soul": name,
-                                "type": "decay_premise_review",
-                                "grade": grade,
-                                "days_since_refined": days_since_refine,
-                                "detail": (
-                                    f"金魂炼化 {days_since_refine} 天，零召唤 → "
-                                    f"审查委员会需裁定：方法论前提是否已被历史证伪？"
-                                ),
-                                "recommended_action": "审查委员会复审 → 维持/降品/散魂",
-                            })
-                except (ValueError, TypeError):
-                    pass
+        # 当前标记逻辑：信息充分度=充分且零召唤且炼化超过 180 天
+        if info_suf == "充分" and count == 0:
+            dt = _parse_refined_date(s.get("refined_at", ""))
+            if dt:
+                days_since_refine = (now - dt).days
+                if days_since_refine >= 180:
+                    issues.append({
+                        "soul": name,
+                        "type": "decay_premise_review",
+                        "function_domains": func_doms,
+                        "info_sufficiency": info_suf,
+                        "days_since_refined": days_since_refine,
+                        "detail": (
+                            f"信息充分度=充分的魂炼化 {days_since_refine} 天，零召唤 → "
+                            f"审查委员会需裁定：方法论前提是否已被历史证伪？"
+                        ),
+                        "recommended_action": "审查委员会复审 → 维持/调整/散魂",
+                    })
 
     return issues
 
@@ -416,7 +390,7 @@ def check_substitutability(souls: list, counts: Counter, eff_summary: dict) -> l
                 issues.append({
                     "soul": name_a,
                     "type": "decay_substitutability",
-                    "grade": s_a.get("grade", "?"),
+                    "function_domains": s_a.get("function_domains", []),
                     "overlapping_domains": sorted(overlap),
                     "substituted_by": name_b,
                     "substitute_stats": f"{name_b}: {b_total}次召唤, 有效{b_effective}",
@@ -445,12 +419,12 @@ def check_premise_validity(souls: list, counts: Counter) -> list[dict]:
         "伊本赫勒敦": {
             "premise": "循环论前提——生产力基本不变、社会凝聚力周期性涨落",
             "risk": "工业革命后生产力可持续增长，制度创新可阻断循环。方向判断（等下一拨游牧民族）在现代条件下不成立",
-            "action": "维持品级但标记方向判断能力降格。不触发散魂（诊断框架仍有价值）"
+            "action": "维持但标记方向判断能力降格。不触发散魂（诊断框架仍有价值）"
         },
         "法农": {
             "premise": "暴力'净化'论——把暴力从工具提升到存在论-心理学圣化层面",
             "risk": "列宁审查已指出：暴力净化论已部分被历史证伪。需区分'暴力作为工具'（毛的枪杆子）vs '暴力作为净化'（法的存在论）",
-            "action": "维持品级但强制搭配物质分析魂魄。单独使用的条件需更严格"
+            "action": "维持但强制搭配物质分析魂魄。单独使用的条件需更严格"
         },
     }
 
@@ -462,7 +436,8 @@ def check_premise_validity(souls: list, counts: Counter) -> list[dict]:
             issues.append({
                 "soul": name,
                 "type": "decay_premise_fragile",
-                "grade": s.get("grade", "?"),
+                "function_domains": s.get("function_domains", []),
+                "info_sufficiency": s.get("info_sufficiency", "?"),
                 "premise": kfp["premise"],
                 "risk": kfp["risk"],
                 "recommended_action": kfp["action"],
@@ -489,16 +464,16 @@ def generate_forgetting_recommendations(souls: list, all_issues: list) -> list[d
             continue
 
         name = issue.get("soul", "?")
-        grade = issue.get("grade", "?")
+        func_doms = issue.get("function_domains", [])
 
         rec = {
             "soul": name,
-            "grade": grade,
+            "function_domains": func_doms,
             "decay_type": issue["type"],
             "detail": issue.get("detail", ""),
             "終末審查四問": [
-                f"1. {name}没有被使用/低效的原因是：(a)幡主任务分布不覆盖其领域 (b)方法论前提已消失 (c)有更好的魂替代了它 (d)品级本身是错的？",
-                f"2. 如果{name}在今天才被收魂炼化，品级会不同吗？",
+                f"1. {name}没有被使用/低效的原因是：(a)幡主任务分布不覆盖其领域 (b)方法论前提已消失 (c)有更好的魂替代了它 (d)功能域标签本身是错的？",
+                f"2. 如果{name}在今天才被收魂炼化，三维标签会不同吗？",
                 f"3. {name}在幡期间是否产生过间接价值（审查对照角色/学习答辩对立面/匹配审查参照物）？",
                 f"4. 散魂后，{name}覆盖的领域是否出现空白？如果是——谁来补？",
             ],
@@ -600,7 +575,7 @@ def main():
             "forgetting_recommendations": forgetting_recs,
         }, ensure_ascii=False, indent=2))
     else:
-        print(f"万魂幡 Registry 健康检查 — {timestamp}")
+        print(f"万民幡 Registry 健康检查 — {timestamp}")
         print(f"共 {len(souls)} 魂 | 顶层召唤记录 {len(global_records)} 条\n")
         print("品级分布（自动统计）：")
         for g in grade_order:

@@ -14,7 +14,9 @@ import yaml
 
 LITE_FIELDS = [
     "name",
-    "grade",
+    "info_sufficiency",
+    "function_domains",
+    "methodology_transferability",
     "domain",
     "trigger_keywords_summary",
     "trigger_scenarios_summary",

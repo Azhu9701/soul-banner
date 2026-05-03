@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""万魂幡 Hook 脚本单元测试"""
+"""万民幡 Hook 脚本单元测试"""
 import json
 import os
 import subprocess
@@ -49,7 +49,7 @@ def main():
     should_not_trigger_tests = [(q, e) for q, e in EVAL_QUERIES if not e]
 
     print("=" * 70)
-    print("万魂幡 Hook 脚本单元测试")
+    print("万民幡 Hook 脚本单元测试")
     print("=" * 70)
 
     results = {"tp": 0, "tn": 0, "fp": 0, "fn": 0, "errors": []}

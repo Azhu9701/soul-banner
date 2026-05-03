@@ -19,11 +19,11 @@
 
 **魂魄 agent 文件**：所有魂在 `~/.claude/agents/{魂名}.md` 有标准化 agent 定义（含 summon_prompt、tools、model），由 `scripts/sync-agent.py --all` 从 soul YAML 自动生成。**禁止手动编辑 agent 文件**——soul YAML 是唯一真相源。每次炼化/升级后必须重新同步：`python3 scripts/sync-agent.py souls/{魂名}.yaml`。spawn 魂时直接使用 `subagent_type="{魂名}"`。重启 Claude Code 后新 agent 生效。
 
-**审查 spawn**：日常匹配审查 spawn `subagent_type="列宁"`（幡主，效率优先，不轮值）。金魂互审和终末审查按轮值表 spawn 对应审查官（毛泽东/邓小平/列宁），第二审查官复核。详见 `soul-profile-format.md`「审查轮值制」。
+**审查 spawn**：日常匹配审查 spawn `subagent_type="未明子"`（幡主，主义主义四维坐标+拉康-马克思互读）。金魂互审和终末审查按轮值表 spawn 对应审查官（毛泽东/邓小平/列宁），第二审查官复核（列宁，老幡主，保留复审位）。详见 `soul-profile-format.md`「审查轮值制」。
 
 **匹配审查轻量化**（三步）：
 
-1. **预筛选**：主 agent 运行 `python3 scripts/match.py "任务描述" --no-gold-review` 做关键词/场景/排除评分，输出首选+备选+排除清单。`--no-gold-review` 省略 gold_review 字段，节省 ~1,500 tokens。
+1. **预筛选**：主 agent 运行 `python3 scripts/match.py "任务描述" --no-review` 做关键词/场景/排除评分，输出首选+备选+排除清单。`--no-review` 省略 gold_review 字段，节省 ~1,500 tokens。
 2. **幡主审查**：主 agent 将两份内容注入幡主 prompt：
    - `match.py` 预筛选结果（当前任务匹配详情）
    - `committee/handbook.md`（历史匹配经验，由 `generate-handbook.py` 自动生成，~270 tokens）
@@ -42,19 +42,17 @@
 **原则**：主 agent **禁止**用自己的话改写魂输出——无论是传给下游 agent 还是存档 Obsidian。魂输出必须是原文。
 
 **流程**：
-1. 每个魂子 agent 返回后，主 agent **立即**将其输出写入 `/tmp/sb-{任务}/{魂名}.md`。写文件时必须逐字复制 agent 返回的原文，禁止概括、压缩、改写、重新组织。
-2. `/tmp/sb-{任务}/` 是本次附体的快速缓存——辩证综合官直接读这些文件。
-3. **辩证综合官**：prompt 中只给 `/tmp/sb-{任务}/` 文件路径清单，自己 Read 原文。
-4. **附体结束后**，调用 `transact.py` 一键完成 Obsidian 同步 + registry 更新 + call-records 记录：
+1. 每个魂子 agent 返回后，主 agent **立即**将其输出直接写入 Obsidian vault：`$OBSIDIAN_VAULT/万民幡/{模式}/{任务简述}/{魂名}.md`。写文件时必须逐字复制 agent 返回的原文，禁止概括、压缩、改写、重新组织。若 `$OBSIDIAN_VAULT` 未配置，回退到 `/tmp/sb-{任务}/`。
+2. 辩证综合官 prompt 中给出 Obsidian 路径清单（或回退 /tmp 路径），辩证综合官自己 Read 原文。
+3. 辩证综合完成后，辩证综合结果同样直接写入 Obsidian 同一目录。
+4. **落盘**：调用 `transact.py possession-close`，此时文件已在 Obsidian 中，transact.py 只更新 registry + call-records + 交叉校验 + 匹配手册，不再复制文件：
    ```bash
    python3 scripts/transact.py possession-close {魂名} \
      --mode {模式} --task "{任务简述}" \
-     --effectiveness {有效|部分有效|无效} \
-     --self-negation "{学习性使用/消费性使用 + 说明}" \
-     --empty-chair "{空椅子回答}" \
-     --obsidian-batch /tmp/sb-{任务}/manifest.json
+     --obsidian-batch $OBSIDIAN_VAULT/万民幡/{模式}/{任务简述}/manifest.json
    ```
-5. 若 `$OBSIDIAN_VAULT` 未配置 → `transact.py` 跳过 Obsidian 同步，仅更新 registry。
+5. 使用者阅读 Obsidian 后，主 agent 依次执行使用者参与环节 → 自我否定 → 空椅子拷问。
+6. **补充落盘**：将使用者回答直接追加至 Obsidian 对应文件末尾，更新 registry + call-records（含 effectiveness/self-negation/empty-chair）。
 
 **辩证综合官 prompt 模板**：
 ```
@@ -62,15 +60,17 @@
 {任务描述}
 
 ## 各魂分析文件（请自行 Read 每个文件获取原文）
-- /tmp/sb-{任务}/{魂A}.md
-- /tmp/sb-{任务}/{魂B}.md
-- /tmp/sb-{任务}/{魂C}.md
+- $OBSIDIAN_VAULT/万民幡/{模式}/{任务简述}/{魂A}.md
+- $OBSIDIAN_VAULT/万民幡/{模式}/{任务简述}/{魂B}.md
+- $OBSIDIAN_VAULT/万民幡/{模式}/{任务简述}/{魂C}.md
 
 ## 幡主预审约束
 {约束条件}
 
 请先 Read 全部文件，再做辩证综合。
 ```
+
+若 `$OBSIDIAN_VAULT` 未配置，路径改为 `/tmp/sb-{任务}/`。
 
 **⚠️ 时代背景注入（硬性）**：每个魂子 agent 的 prompt 末尾，主 agent 必须附加**时代背景卡**。魂来自不同时代（波伏娃 1949 巴黎、鲁迅 1920s 上海），他们对"当下"一无所知。
 
@@ -89,7 +89,19 @@
 
 **原则**：背景卡不指导分析方向——只提供魂不知道的当代事实。每个魂自己决定怎么用这些信息。背景卡不超过 5 行，只放与任务直接相关的内容。
 
-## Skill 集成规则
+**⚠️ 共享事实简报（硬性，合议/辩论/接力模式强制）**：多魂并行时，每个魂独立介绍背景会重复铺陈。主 agent 必须在 spawn 魂之前创建一份**共享事实简报**，写入 Obsidian 任务目录（或回退 `/tmp/sb-{任务}/`），附在每个魂的 prompt 中。魂直接引用简报，**禁止**在分析中重复铺陈背景。
+
+**共享事实简报格式**（不超过 6 行，只列魂需要知道但无法自行获取的事实）：
+```
+## 共享事实简报
+
+以下事实已确认，请直接在分析中使用，无需重复介绍：
+- {事件}: {关键人物/时间/地点/性质}
+- {数据}: {与任务相关的统计或调查结果}
+- {语境}: {当代特有的概念或背景}
+```
+
+**原则**：简报是事实，不是分析方向。魂 prompt 中同时附上简报和时代背景卡。简报消除重复铺陈，背景卡提醒时代局限。两者不互相替代。
 
 ### markitdown — 收魂格式转换
 
@@ -99,27 +111,27 @@
 ```
 转换素材纳入炼化阶段的读取范围。
 
-### humanizer — 去 AI 痕迹
-
-触发点两处：
-1. **炼化后**：Soul Profile 生成后，调用 `Skill("humanizer")` 处理 mind/voice/summon_prompt 字段
-2. **附体后**：每个魂的附体输出，在存档 Obsidian 前调用 `Skill("humanizer")`
-
-**硬性约束**：不同魂的语言风格必须保持差异。humanizer 指令必须包含该魂 voice 字段的风格保留声明。禁止用 humanizer 统一所有魂的语言风格。
-
 ### 收魂搜索回退链
 
 1. **tmwd-bridge**（默认）— 真实 Chrome 多引擎搜索
 2. **WebSearch + WebFetch**（回退）— 内置搜索工具
 3. **agent-browser**（备选）— 无头浏览器，JS 渲染页面抓取
 
-### graphify — 审查知识图谱
+**v3.1 搜索维度**（两套并行）：
 
-审查/互审报告保存后，调用 `Skill("graphify")` 更新知识图谱。非强制性。
+人物基础 6 维：生平时代 / 核心思想 / 主要著作 / 方法论特征 / 对后世影响 / 争议批判
+
+主义主义定位 4 维（服务于炼化阶段目录匹配）：
+- **场域位置**：该人物在什么背景下思考和行动？他的思想发生在什么样的存在论框架中？
+- **本体论预设**：他认为什么最真实？物质/精神/生命/符号？这个预设是显式的还是隐式的？
+- **认识论路径**：他凭什么说知道了？经验观察/理性推导/直觉体认/辩证否定？
+- **目的论方向**：他的思想要把人带去哪？保守/改良/解放/消解？
+
+收魂完成后，增加**目录预查**：在未明子原版 256 目录中初步定位——该人物或近似位置是否已存在？最近的条目是什么？
 
 ### loop — 运维自动化
 
-**边界**：只自动化运维检查，不自动化判断行为。禁止用 loop 自动执行审查/互审/品级调整。
+**边界**：只自动化运维检查，不自动化判断行为。禁止用 loop 自动执行审查/互审/标签调整。
 
 设置维护循环：
 ```
@@ -130,106 +142,89 @@
 ```
 审查委员会轮值调度不使用 loop——轮值由幡主在每次附体时手动判断。
 
-**Spawn 魂的标准模板**：
+**Spawn 魂的标准模板**（合议/辩论/接力模式）：
 ```
 Agent(
   subagent_type="{魂名}",
   description="{任务简述} — {魂名}视角",
-  prompt="{任务描述}
+  prompt="## 任务
+{任务描述}
+
+## 共享事实简报（已确认，直接使用，无需重复介绍）
+Read $OBSIDIAN_VAULT/万民幡/{模式}/{任务简述}/事实简报.md
+
+## 时代背景
+{时代背景卡}
+
+## 约束条件
+{幡主审查给定的约束}
 
 ---
 本魂基于{炼化日期}收魂素材炼化，素材来源包括多引擎搜索和公开文献。这不是{魂名}本人——这是基于其公开文本的 AI 模拟。在用它做高利害决策前，请交叉验证。"
 )
 ```
-Prompt 末尾必须附带一行生成链路说明：「本魂基于{炼化日期}收魂素材炼化……是 AI 模拟，不是本人。」
+单魂模式下共享事实简报和时代背景卡合并到 prompt 中，不单独写文件。
 
-**Spawn 幡主审查专用模板**（必须严格遵循）：
+若 `$OBSIDIAN_VAULT` 未配置，路径改为 `/tmp/sb-{任务}/`。
+
+**Spawn 幡主审查专用模板**（v3.1，含主义主义目录匹配审查。必须严格遵循）：
+
 ```
 Agent(
-  subagent_type="列宁",
+  subagent_type="未明子",
   description="幡主匹配审查",
-  prompt="匹配预筛选结果：
-{match.py --no-gold-review 的完整输出}
+  prompt="## 匹配预筛选结果（match.py v3.0 双层输出）
+
+{match.py --no-review 的完整输出}
+
+以上输出包含：
+- 算法提取的任务场域 — 用于 compat/incompat 检查
+- 表层分 + 结构分 + 融合分
+- ismism 目录编码 + 目录条目 + 匹配质量（精确/近似/复合/反讽/目录外）
+- 结构提示（场域不兼容/冗余协同/盲区互补/内容锚定）
 
 ---
-禁止读取任何文件。仅基于以上预筛选结果和已知的魂领域知识做判断。按清单回答：领域匹配 / 排除风险 / 边界风险 / 裁决。"
+禁止读取任何文件。仅基于以上预筛选结果和已知的魂领域知识做判断。
+
+## 审查清单（逐条回答，每条一句话）
+
+### 领域与排除
+1. **领域匹配**: 首选魂的领域是否实质性覆盖此任务？算法判断对吗？[Y/N + 简述]
+2. **排除风险**: 有无排斥条件实质性触发？算法漏了或误判了吗？[Y/N + 哪个]
+
+### 结构审查（基于主义主义目录 compat，非坐标算术）
+3. **场域审查**: 算法的场域判断对吗？有没有场域不兼容被误标？有没有该上但被排除的魂（如内容锚定检测漏了）？
+4. **目录匹配审查**: 首选魂的 ismism 目录匹配是否合理？匹配质量标注对吗？
+5. **冗余/盲区审查**: 算法的冗余标注和盲区互补标注对吗？
+6. **合议审查**: 需要合议吗？算法推荐的人选是否合适？
+
+### 裁决
+7. **边界风险**: 适用边界外溢风险？[无/低/中/高 + 简述]
+8. **裁决**: [通过 / 条件通过(加约束) / 换X / 需合议 / 需第二审查官]
+   - 如加约束：具体是什么约束？
+   - 如换魂：换谁？为什么？
+   - 如合议：推荐哪几个魂？"
 )
 ```
-审查 prompt 中必须包含「**禁止读取任何文件**」，且预筛选结果使用 `--no-gold-review` 精简版。
 
-## cmux 可视化模式（实验性，feature/cmux-integration 分支）
+审查 prompt 中必须包含「**禁止读取任何文件**」。
+预筛选结果使用 `--no-review` 精简版。
+审查清单 v3.1 — 从坐标算术审查改为目录匹配审查。移除「认识审查」（不再独立追踪本体/认识/目的），新增「目录匹配审查」。
 
-**状态**：实验阶段。仅在合议/辩论/接力模式的附体执行阶段使用 cmux 可视化，匹配审查和辩证综合仍使用传统 Agent spawn。
+**审查补人规则**（v3.2 新增——来自全链路测试反馈）：
+当首选魂的 `match_quality` 为「近似」或「目录外」，且任务涉及该魂 compat 盲区（如批判型魂被要求处理建构型任务），幡主审查必须执行：
+> 「当框架短板恰好是任务必需能力时，不在条件中模糊化——直接在合议中补人。」
+即在合议建议中显式指定承担该能力的魂，而非仅加「需补充过渡策略」之类的模糊约束。
 
-**前置检查**：使用 cmux 模式前，主 agent 必须检查 cmux 是否运行：
-```
-mcp__cmux-agent-mcp__cmux_status → running: true
-```
-不可用时回退到传统 Agent spawn 模式，并在报告中注明「cmux 不可用，回退传统模式」。
+## cmux 可视化模式（实验性）
 
-### cmux 附体流程（v4: Agent 调度器）
+**状态**：实验阶段，不合并主干。触发词加「可视化」启用（合议可视化/辩论可视化/接力可视化）。
 
-**架构**：`cmux_launch_agents` 启动 N 个 Claude CLI，每个 CLI 仅做一件事 —— 调用 `Agent(subagent_type="{魂名}")` 召唤魂 agent。分析质量由魂 agent 保证，与主线一致。每 pane 约 500 token 调度开销，vs 魂分析 15K+ token。
+**架构**：`cmux_launch_agents` → N 个 Claude CLI pane → 每个 pane 调用 `Agent(subagent_type="{魂名}")` → 魂分析 → 写 `/tmp/sb-{slug}/{魂名}.md`。分析质量与传统模式完全一致（同一套 summon_prompt），区别仅在于思考过程实时可见。
 
-**1. 生成编排计划**：
-```bash
-python3 scripts/cmux-plan.py \
-  --task "{任务描述}" \
-  --task-slug "{slug}" \
-  --souls {魂A},{魂B},{魂C} \
-  --mode {conference|debate|relay} \
-  --era "{时代背景补充}" \
-  -o /tmp/cmux-plan.json
-```
+**前置检查**：`mcp__cmux-agent-mcp__cmux_status → running: true`，不可用时自动回退传统模式。魂数 > 6 时也回退。
 
-**2. 初始化文件**：
-```bash
-mkdir -p /tmp/sb-{slug}
-touch /tmp/sb-{slug}/{魂A}.md /tmp/sb-{slug}/{魂B}.md ...
-```
-
-**3. 启动 cmux Agent pane 并分发任务**：
-读 `/tmp/cmux-plan.json`，使用 `assignments` 和 `tab_names`：
-```
-cmux_launch_agents(
-  cli="claude",
-  count=N,
-  workspace_name="{workspace_name}",
-  assignments=[...],     # 来自 plan JSON（约 500 char/pane）
-  tab_names=[...],       # 来自 plan JSON
-  status={...},
-  progress=0.3,
-  progress_label="{progress_label}"
-)
-```
-每个 pane 收到调度指令 → 调用 `Agent(subagent_type="{魂名}")` → 魂 agent 分析 → 写入输出文件。
-
-**4. 监控进度**：
-```
-cmux_read_all 检查各 pane 状态
-cmux_set_status(key="{魂名}", value="写作中/已完成")
-```
-当所有 pane 报告完成，`cmux_set_progress(0.7)`。
-
-**5. 收集输出**：
-主 agent Read `/tmp/sb-{slug}/*.md` → spawn 辩证综合官（与传统模式相同）。
-
-**6. 清理**：`cmux_set_progress(1.0)`。默认保留 workspace。
-
-### cmux vs 传统模式差异
-
-| 项目 | 传统模式 | cmux v4 |
-|------|---------|---------|
-| 魂运行 | 主 agent spawn `Agent(subagent_type)` | cmux pane → `Agent(subagent_type)` |
-| summon_prompt | Agent 系统注入 | **完全一致** |
-| 分析质量 | Agent 保证 | **完全一致** |
-| 思考过程 | 不可见 | **实时可见**（pane 显示调度和文件写入确认） |
-| 额外 token | 0 | ~500/pane（调度指令） |
-| 质询 | 事后 spawn agent | 事中 `cmux_broadcast` 或 spawn agent |
-
-### 回退规则
-
-cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
+**流程**：`cmux-plan.py` 生成编排计划 → `cmux_launch_agents` 启动 pane → `cmux_read_all` 监控 → 主 agent Read 输出 → spawn 辩证综合官（同传统模式）。完整文档见 **[references/cmux-integration.md](references/cmux-integration.md)**。
 
 ### 事务脚本（transact.py）— 落盘自动化
 
@@ -240,7 +235,7 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 | 时机 | 子命令 | 示例 |
 |------|--------|------|
 | 炼化完成 | `refine-close <魂名>` | `python3 scripts/transact.py refine-close 鲁迅` |
-| 审查/互审完成 | `review-apply <魂名> --review-file <路径> [--verdict "..."] [--grade X] [--reviewer X]` | `python3 scripts/transact.py review-apply 费曼 --review-file reviews/金魂互审-鲁迅审费曼-2026-05-02.md --verdict "维持金魂"` |
+| 审查/互审完成 | `review-apply <魂名> --review-file <路径> [--verdict "..."] [--reviewer X]` | `python3 scripts/transact.py review-apply 费曼 --review-file reviews/金魂互审-鲁迅审费曼-2026-05-02.md --verdict "裁定维持"` |
 | 附体结束 | `possession-close <魂名> --mode <模式> --task <任务> --effectiveness <有效\|部分有效\|无效> --self-negation "<学习性使用/消费性使用 + 说明>" --empty-chair "<空椅子回答>"` | `python3 scripts/transact.py possession-close 鲁迅 --mode 单魂 --task "组织文化诊断" --effectiveness 有效 --self-negation "学习性使用：对团队自欺机制的理解被修正" --empty-chair "一线执行者的利益没有被组织架构代表"` |
 
 **注意**：`--self-negation` 和 `--empty-chair` 推荐填写。Lite 模式下缺少时仅警告不阻止落盘，Pro 模式由 SKILL.md 强制执行。
@@ -257,17 +252,17 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 
 **Obsidian 存档方式**：
 
-`transact.py possession-close` 自动处理 Obsidian 同步。主 agent 只需准备 `/tmp/sb-{任务}/manifest.json`：
+魂输出和辩证综合**直接写入** Obsidian vault（`$OBSIDIAN_VAULT/万民幡/{模式}/{任务简述}/`），不再经过 `/tmp` 中转。`transact.py possession-close` 只更新 registry + call-records + 交叉校验 + 匹配手册，不再复制文件。
 
+manifest.json 中的 file 路径指向 Obsidian（或回退 /tmp）：
 ```json
 {"mode": "合议", "task": "任务简述", "date": "2026-05-02", "files": [
-  {"soul": "魂A", "role": "角色", "file": "/tmp/sb-{任务}/魂A.md"},
-  {"soul": "魂B", "role": "角色", "file": "/tmp/sb-{任务}/魂B.md"},
-  {"soul": "辩证综合官", "role": "辩证综合", "file": "/tmp/sb-{任务}/辩证综合.md"}
+  {"soul": "魂A", "role": "角色", "file": "$OBSIDIAN_VAULT/万民幡/合议/任务简述/魂A.md"},
+  {"soul": "辩证综合官", "role": "辩证综合", "file": "$OBSIDIAN_VAULT/万民幡/合议/任务简述/辩证综合.md"}
 ]}
 ```
 
-`transact.py` 自动：复制文件到 `$OBSIDIAN_VAULT/万民幡/{模式}/{日期}-{任务}/` → 更新 registry → 记录 call-records。若 `$OBSIDIAN_VAULT` 未配置 → 跳过 Obsidian 同步，仅更新 registry。
+`transact.py` 自动：检测文件已在 Obsidian → 跳过复制 → 更新 registry → 记录 call-records。若 `$OBSIDIAN_VAULT` 未配置 → 回退 `/tmp/sb-{任务}/`，仅更新 registry。
 
 **目录删除检查清单**：附体任务涉及删除目录时，主 agent 在 Task 描述中必须：
 1. 逐项列出每个待删目录，说明其性质（生产依赖/开发产物/一次性实验）
@@ -299,7 +294,7 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 
 调用 Skill(soul-banner) → 遵循 SKILL.md 附体流程 → 完成后核对 Task 列表全部为 completed。
 
-附体步骤（详见 SKILL.md）：匹配魂 → 幡主审查 → 执行 → registry 更新 + Obsidian 存档（后两步并行）。附体结束报告：参与信息 → 存档位置 → 魂/辩证综合官原文。
+附体步骤（详见 SKILL.md）：匹配魂 → 幡主审查 → 执行 → 导出 Obsidian → 使用者参与/自我否定/空椅子 → 补充落盘。附体结束报告：先导出 Obsidian 让使用者阅读，再提问。魂/辩证综合官原文在 Obsidian 中完整呈现。
 
 ### 使用者预设声明（匹配前强制）
 
@@ -327,7 +322,7 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 
 ### 使用者参与环节（合议/辩论/接力后强制）
 
-辩证综合官给出综合结论后，主 agent 必须向使用者提问两个问题（在质询邀请之前）：
+辩证综合官给出综合结论后，主 agent **先导出 Obsidian**，让使用者在 Obsidian 中阅读完整魂输出和辩证综合。之后再提问两个问题（在质询邀请之前）：
 
 > **1. 这个综合的哪个部分是你最没想到的？**
 > **2. 这个综合的哪个部分你在附体前就已经知道？**
@@ -359,41 +354,20 @@ cmux 未安装/未运行/魂数 > 6 时自动回退传统模式。
 
 ## 启动流程
 
-每次 `/soul-banner` 被调用（无子命令）或新会话启动时，主 agent 必须按顺序执行：
-
-### 1. 健康检查
+每次 `/soul-banner` 被调用（无子命令）或新会话启动时，主 agent 执行一条命令：
 
 ```bash
-python3 scripts/registry-health-check.py --last-run
-```
-如果输出 `NEVER_RUN` 或 `STALE:`（超过 24 小时未运行），则执行完整检查：
-```bash
-python3 scripts/registry-health-check.py
+python3 scripts/state-summary.py --days 3 --compact
 ```
 
-### 2. 三方交叉校验
+该脚本自动完成：实时余额查询、registry-lite 陈旧检测与重新生成、handbook 陈旧检测与重新生成、交叉校验（含自动修复）、agent 一致性检测、多数据源聚合快照输出。主 agent 直接将快照呈现给用户，**禁止**手动扫描目录拼凑状态。
 
-```bash
-python3 scripts/cross-validate.py
-```
-如有错误（exit code != 0），必须执行 `python3 scripts/cross-validate.py --fix` 自动修复，然后重新校验确认 0 错误。
+**会话结束时**，在更新 registry 或魂 YAML 之后，运行 `python3 scripts/cross-validate.py` 确保写入操作未引入不一致。
 
-### 3. 状态快照
-
-```bash
-python3 scripts/state-summary.py --days 3
-```
-该脚本聚合 registry.yaml、call-records.yaml、committee/state.json、reviews/、committee/meetings/ 全部数据源，输出统一 Markdown 快照。主 agent 直接将输出呈现给用户，**禁止**手动扫描目录拼凑状态。
-
-**会话结束时**，在更新 registry 或魂 YAML 之后，也要重新运行交叉校验，确保写入操作未引入不一致。
-
-检查结果不需要用户确认——主 agent 自行判断是否需要修复数据不一致问题。
-
-**跨底模验证**：每季度（或每 30 次附体后）对高频使用的魂执行跨底模验证：
+**跨底模验证**：每季度（或每 30 次附体后）对高频使用的魂执行：
 ```bash
 python3 scripts/cross-model-verify.py --protocol
 ```
-验证实验协议详见脚本 `--protocol` 输出。验证结果保存至 `logs/cross-model-verify/`。
 
 ## 关键认知
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# 万魂幡运维自动化脚本 — 由 loop skill 周期性触发
+# 万民幡运维自动化脚本 — 由 loop skill 周期性触发
 # 只做运维检查，不碰判断行为（审查/互审/品级调整）
 # 用法：/loop 1h bash ~/.claude/skills/soul-banner/scripts/maintenance-loop.sh --health
 #       /loop 6h bash ~/.claude/skills/soul-banner/scripts/maintenance-loop.sh --validate

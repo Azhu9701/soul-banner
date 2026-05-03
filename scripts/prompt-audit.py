@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""万魂幡 Prompt 审计
+"""万民幡 Prompt 审计
 
 分析 souls/ 目录下所有魂的 summon_prompt 长度，输出：
   - 每个魂的 summon_prompt 行数和估算 token 数
@@ -212,7 +212,7 @@ def main():
         print(json.dumps(output, ensure_ascii=False, indent=2))
     else:
         print("=" * 70)
-        print(f"万魂幡 Prompt 审计 — {total_souls} 个魂魄")
+        print(f"万民幡 Prompt 审计 — {total_souls} 个魂魄")
         print(f"平均 summon_prompt: {avg_lines:.1f} 行 / {avg_tokens:.0f} tokens")
         print("=" * 70)
 
