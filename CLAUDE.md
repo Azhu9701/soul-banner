@@ -21,19 +21,48 @@
 
 **审查 spawn**：日常匹配审查 spawn `subagent_type="未明子"`（幡主，主义主义四维坐标+拉康-马克思互读）。金魂互审和终末审查按轮值表 spawn 对应审查官（毛泽东/邓小平/列宁），第二审查官复核（列宁，老幡主，保留复审位）。详见 `soul-profile-format.md`「审查轮值制」。
 
-**匹配审查轻量化**（三步）：
+**附体匹配**（v3.3 — 两种模式。默认广播自选）：
 
-1. **预筛选**：主 agent 运行 `python3 scripts/match.py "任务描述" --no-review` 做关键词/场景/排除评分，输出首选+备选+排除清单。`--no-review` 省略 gold_review 字段，节省 ~1,500 tokens。
-2. **幡主审查**：主 agent 将两份内容注入幡主 prompt：
-   - `match.py` 预筛选结果（当前任务匹配详情）
-   - `committee/handbook.md`（历史匹配经验，由 `generate-handbook.py` 自动生成，~270 tokens）
-   
-   **幡主审查阶段硬性禁读**：幡主必须仅基于 prompt 中已注入的预筛选结果和 handbook 做判断，**禁止读取任何文件**（包括 registry.yaml、registry-lite.yaml、魂 YAML、call-records.yaml）。按结构化清单回答：领域匹配 / 排除风险 / 边界风险 / 裁决。
-3. **深度审查**：匹配通过后，幡主才读完整魂 YAML 做深度审查。
+### 模式 A：广播自选（默认，v3.3 互见模式）
 
-**手册更新**：每次附体落盘后（`transact.py possession-close`），主 agent 运行 `python3 scripts/generate-handbook.py -o committee/handbook.md --compact` 更新手册。手册约 270 tokens，自动从 `call-records.yaml` 提取魂效能统计+失败模式+零召唤预警。
+匹配是魂之间的对话，不是外部引擎的计算。两轮广播：
 
-`registry-lite.yaml` 由 `scripts/generate-registry-lite.py` 从 `registry.yaml` 自动生成。每次 `registry.yaml` 更新后主 agent 须重新生成。
+**第一轮：互见自选**
+1. **广播格式化**：`python3 scripts/broadcast.py "任务描述"` — 含 20 魂 self_declare + 场域内互见交叉表 + 跨场域互补参考
+2. **互见修正**：主 agent 做 [Y/N] + 主力/补位 判断时，检查自选 Y 的魂之间盲区是否互相覆盖。有缺口→从 Maybe/N 中补
+3. **初步合议组**：主力1-2 + 补位1-2 ≤ 4魂
+
+**第二轮：互见挑战**
+4. **轻量广播**：将初步合议组名单 + self_declare 发送给全部 20 魂的轻量 spawn（每魂 ~500 字 prompt）：
+   - ① 合议组是否有遗漏？② 是否有盲区需要补充？③ 无异议直接回"无异议"
+   - 并行 spawn，30秒超时→视为无异议
+5. **收集异议**：非"无异议"的回答 → 如有魂提出新候选 → 追加进入幡主审查
+6. **幡主审查**：spawn 未明子审查合议组+异议 → 按 v3.2 补人规则。如互见轮增加噪音（异议>5/单魂>200字）→ 幡主可指令回退
+7. **正式 spawn**：合议组 → 完整 summon_prompt → 辩证综合
+
+**self_declare 演化**（每次附体后）：
+```bash
+# 魂提出修改 → pending 状态，不立即替换正式版本
+python3 scripts/evolve_declare.py propose <魂名> --task "任务简述" --text "新声明" --reason "为什么改"
+
+# 检查待审修改
+python3 scripts/evolve_declare.py review <魂名>
+
+# 积累 3 次待审 → 幡主审查后批准
+python3 scripts/evolve_declare.py accept <魂名> --version N
+```
+
+### 模式 B：match.py 算法匹配（回退）
+
+当用户显式要求算法匹配、或需要精确的定量对比（如对照实验）时使用：
+
+1. **预筛选**：`python3 scripts/match.py "任务描述" --no-review`
+2. **幡主审查**：spawn 未明子审查算法推荐（8 问清单 v3.1）
+3. **正式 spawn**：审查通过 → 合议/单魂
+
+**手册更新**：每次附体落盘后运行 `python3 scripts/generate-handbook.py -o committee/handbook.md --compact`
+
+`registry-lite.yaml` 由 `scripts/generate-registry-lite.py` 自动生成。
 
 **辩证综合 spawn**：合议模式阶段二，spawn `subagent_type="辩证综合官"`。该 agent 定义了五步综合法（共识/分歧/盲区/主要矛盾/行动纲领）。
 
