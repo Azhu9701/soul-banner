@@ -114,7 +114,6 @@ REPORTING_CONTEXT_PATTERNS = [
     r"\[.{0,20}(?:审查|报告|输出).{0,20}\]",
 ]
 
-
 def load_state():
     try:
         with open(STATE_FILE) as f:
@@ -128,7 +127,6 @@ def load_state():
             "last_violation_at": None,
             "tool_calls_tracked": [],
         }
-
 
 def load_cumulative():
     try:
@@ -145,18 +143,15 @@ def load_cumulative():
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
-
 def save_cumulative(cumulative):
     cumulative["last_updated"] = datetime.now(timezone.utc).isoformat()
     with open(CUMULATIVE_FILE, "w") as f:
         json.dump(cumulative, f, ensure_ascii=False, indent=2)
 
-
 def save_state(state):
     state["tool_calls_tracked"] = state["tool_calls_tracked"][-50:]
     with open(STATE_FILE, "w") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
-
 
 def log_violation(violation_type: str, detail: str, evidence: str, is_warning: bool = False):
     """记录违规到日志文件"""
@@ -183,7 +178,6 @@ def log_violation(violation_type: str, detail: str, evidence: str, is_warning: b
         )
         print(json.dumps({"systemMessage": msg}, ensure_ascii=False))
 
-
 def extract_all_text(obj, max_depth=5):
     if max_depth <= 0:
         return ""
@@ -195,14 +189,12 @@ def extract_all_text(obj, max_depth=5):
         return " ".join(extract_all_text(v, max_depth - 1) for v in obj)
     return ""
 
-
 def find_patterns(text: str, patterns: list[str]) -> list[str]:
     matches = []
     for pattern in patterns:
         found = re.findall(pattern, text)
         matches.extend(found)
     return matches
-
 
 def check_exemptions(text: str) -> bool:
     """只在明确调用 Skill(soul-banner) 或 spawn 魂时豁免。
@@ -212,14 +204,12 @@ def check_exemptions(text: str) -> bool:
             return True
     return False
 
-
 def check_reporting_context(text: str) -> bool:
     """检查违规模式是否出现在报告/转述子 agent 输出的上下文中"""
     for pattern in REPORTING_CONTEXT_PATTERNS:
         if re.search(pattern, text):
             return True
     return False
-
 
 def main():
     try:
@@ -312,7 +302,6 @@ def main():
         save_cumulative(cumulative)
     print("{}")
     sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

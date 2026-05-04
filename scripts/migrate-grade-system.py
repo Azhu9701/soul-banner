@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""将六阶品级系统迁移到三维功能标签系统。
+"""将系统迁移到系统。
 
 用法：python3 scripts/migrate-grade-system.py [--dry-run]
 """
@@ -35,7 +35,7 @@ MIGRATION_MAP = {
 
 dry_run = "--dry-run" in sys.argv
 
-print("🔄 品级系统迁移：六阶等级 → 三维功能标签\n")
+print("🔄 系统迁移：等级 → \n")
 
 # ── 1. 更新 soul YAML ──
 print("── Soul YAML ──")
@@ -54,7 +54,7 @@ for fname in sorted(os.listdir(SOULS_DIR)):
 
     info_suf, func_doms, meth_trans = MIGRATION_MAP[name]
 
-    # 保留原品级
+    # 保留原
     if "grade" in soul:
         soul["legacy_grade"] = soul.pop("grade")
     # 保留原 grade_reason
@@ -62,9 +62,6 @@ for fname in sorted(os.listdir(SOULS_DIR)):
         soul["legacy_grade_reason"] = soul.pop("grade_reason")
 
     # 写入三维
-    soul["info_sufficiency"] = info_suf
-    soul["function_domains"] = func_doms
-    soul["methodology_transferability"] = meth_trans
 
     if not dry_run:
         with open(fpath, "w") as f:
@@ -88,10 +85,6 @@ for s in registry.get("魂魄", []):
         s["legacy_grade"] = s.pop("grade")
     if "grade_symbol" in s:
         s.pop("grade_symbol", None)
-
-    s["info_sufficiency"] = info_suf
-    s["function_domains"] = func_doms
-    s["methodology_transferability"] = meth_trans
 
 # 更新版本
 registry["版本"] = "2.0"

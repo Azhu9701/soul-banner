@@ -61,7 +61,6 @@ EXCLUDE_PATTERNS = [
     r"(?:API|api|接口|拉取数据|存入|数据库|postgresql)",
 ]
 
-
 def load_soul_names():
     """从 registry.yaml 动态加载魂魄名列表。失败则返回空列表——不静默退化。"""
     registry_path = os.path.join(SKILL_DIR, "registry.yaml")
@@ -80,14 +79,12 @@ def load_soul_names():
         print(json.dumps({"systemMessage": f"【万民幡警告】加载 registry 失败: {e}"}), file=sys.stderr)
     return []
 
-
 def check_level1(prompt: str) -> str | None:
     """命令词精确命中"""
     for word in COMMAND_WORDS:
         if word in prompt:
             return f"命令词「{word}」"
     return None
-
 
 def check_level2(prompt: str, soul_names: list[str]) -> str | None:
     """魂魄名 + 视角句式"""
@@ -105,7 +102,6 @@ def check_level2(prompt: str, soul_names: list[str]) -> str | None:
 
     return None
 
-
 def check_level3(prompt: str) -> str | None:
     """场景关键词组 >= 2 组命中"""
     hit_groups = []
@@ -116,14 +112,12 @@ def check_level3(prompt: str) -> str | None:
         return f"场景关键词组「{'、'.join(hit_groups)}」"
     return None
 
-
 def check_exclude(prompt: str) -> bool:
     """检查排除条件"""
     for pattern in EXCLUDE_PATTERNS:
         if re.search(pattern, prompt):
             return True
     return False
-
 
 def build_system_message(match_reason: str) -> str:
     return (
@@ -136,7 +130,6 @@ def build_system_message(match_reason: str) -> str:
         "3. 禁止自行扮演多个角色进行辩论——必须通过独立子 agent 执行\n\n"
         "请立即执行 Skill(soul-banner)。"
     )
-
 
 def main():
     try:
@@ -173,7 +166,6 @@ def main():
     # 无匹配
     print("{}")
     sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

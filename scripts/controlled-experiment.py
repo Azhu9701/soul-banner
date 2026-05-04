@@ -67,7 +67,6 @@ DEFAULT_TASKS = [
     "论证一个工具的设计者是否有道德义务在其工具中嵌入自我批判机制",
 ]
 
-
 def generate_task_pool(n=20, output_path=None):
     """生成实验任务池。从默认任务中随机选取 n 个，确保域分布均衡。"""
     if output_path is None:
@@ -116,7 +115,6 @@ def generate_task_pool(n=20, output_path=None):
         count = sum(1 for t in pool["tasks"] if t["domain"] == domain)
         print(f"   {domain}: {count}")
     return output_path
-
 
 def generate_condition_config(task_id, condition, tasks_path=None):
     """为特定条件生成实验配置。不同条件给出不同的 prompt 模板。"""
@@ -184,7 +182,6 @@ def generate_condition_config(task_id, condition, tasks_path=None):
     config["domain"] = task["domain"]
 
     return config
-
 
 def blind_review(results_dir=None):
     """盲评模式：读取所有条件的输出，去标识化后等待人工评审。
@@ -257,7 +254,6 @@ def blind_review(results_dir=None):
     for dim, desc in review_bundle["scoring_dimensions"].items():
         print(f"   {dim}: {desc}")
 
-
 def compute_stats(results_dir=None, map_file=None):
     """统计分析：比较各条件的表现。"""
     if results_dir is None:
@@ -306,7 +302,6 @@ def compute_stats(results_dir=None, map_file=None):
     print(f"\n🏆 最佳条件: ...")  # 需要实际数据
     print(f"\n💡 提示: 运行 python3 scripts/controlled-experiment.py stats --full 查看详细维度得分")
 
-
 def main():
     parser = argparse.ArgumentParser(description="万民幡对照实验框架")
     sub = parser.add_subparsers(dest="command")
@@ -344,7 +339,6 @@ def main():
         compute_stats(args.results_dir, args.map_file)
     else:
         parser.print_help()
-
 
 if __name__ == "__main__":
     main()

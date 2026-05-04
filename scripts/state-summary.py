@@ -2,7 +2,7 @@
 """万民幡状态摘要 — 聚合所有数据源输出统一快照
 
 数据源：
-  registry.yaml       — 魂魄列表、品级、gold_review
+  registry.yaml       — 魂魄列表、ismism编码、gold_review
   call-records.yaml   — 近期附体记录
   committee/state.json — 委员会、预算、C指标、待办
   reviews/            — 近期审查报告文件
@@ -40,11 +40,9 @@ SOULS_DIR = os.path.join(SKILL_DIR, "souls")
 # 非魂 agent（不应对应 soul YAML）
 SYSTEM_AGENTS = {"辩证综合官", "列宁审查官", "minimal-tool-user"}
 
-
 def load_json(path):
     with open(path) as f:
         return json.load(f)
-
 
 def get_recent_files(directory, pattern, days):
     """返回最近 N 天内的文件列表（名称+修改时间）"""
@@ -58,16 +56,8 @@ def get_recent_files(directory, pattern, days):
             results.append((f.name, mtime.strftime("%m-%d %H:%M")))
     return results
 
-
-def sort_by_dims(s):
-    # 按信息充分度→功能域标签数→方法论可传输度排序
-    info_order = {"充分": 0, "中等": 1, "不足": 2}
-    meth_order = {"可传输": 0, "嵌入型": 1, "人格型": 2}
-    info = info_order.get(s.get("info_sufficiency", "不足"), 3)
-    doms = len(s.get("function_domains", []))
-    meth = meth_order.get(s.get("methodology_transferability", "人格型"), 3)
-    return (info, -doms, meth, s.get("name", ""))
-
+def sort_by_name(s):
+    return s.get("name", "?").lower()
 
 def fetch_deepseek_balance():
     """从 DeepSeek API 拉取实时账户余额。返回 dict 或 None（失败时）。"""
@@ -107,7 +97,6 @@ def fetch_deepseek_balance():
             continue
     return None
 
-
 def _insecure_ssl_context():
     """创建跳过证书验证的 SSL context（公司代理环境回退）。"""
     import ssl
@@ -116,7 +105,6 @@ def _insecure_ssl_context():
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
     return ctx
-
 
 def update_state_budget(balance_info):
     """将实时余额写回 committee/state.json。"""
@@ -137,7 +125,6 @@ def update_state_budget(balance_info):
     with open(STATE_PATH, "w") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
 
-
 def sync_registry_lite():
     """如果 registry.yaml 比 registry-lite.yaml 新，自动重新生成。"""
     if not os.path.exists(REGISTRY_PATH):
@@ -150,7 +137,6 @@ def sync_registry_lite():
     ok, out = run_script("generate-registry-lite.py", "-o", REGISTRY_LITE_PATH)
     return (ok, "registry-lite.yaml 已自动重新生成" if ok else f"生成失败: {out}")
 
-
 def sync_handbook():
     """如果 call-records.yaml 比 handbook.md 新，自动重新生成。"""
     if not os.path.exists(CALL_RECORDS_PATH):
@@ -162,7 +148,6 @@ def sync_handbook():
             return None
     ok, out = run_script("generate-handbook.py", "-o", HANDBOOK_PATH, "--compact")
     return (ok, "handbook.md 已自动重新生成" if ok else f"生成失败: {out}")
-
 
 def check_agent_consistency():
     """返回 agent 文件一致性报告：stale / orphan / missing。"""
@@ -199,7 +184,6 @@ def check_agent_consistency():
 
     return reports
 
-
 def auto_fix_cross_validate():
     """运行交叉校验，有错自动 --fix。"""
     ok, out = run_script("cross-validate.py")
@@ -213,7 +197,6 @@ def auto_fix_cross_validate():
         return (True, "交叉校验发现错误，已自动修复")
     else:
         return (False, f"交叉校验自动修复失败，残留错误:\n{re_out}")
-
 
 def run_auto_maintenance():
     """执行所有自动运维检查，返回操作摘要列表。"""
@@ -240,7 +223,6 @@ def run_auto_maintenance():
         actions.append((False, msg))
 
     return actions
-
 
 def main():
     days = 7
@@ -273,13 +255,9 @@ def main():
     souls = registry.get("魂魄", [])
     banner_master = registry.get("万民幡主", "未知")
 
-    # 按功能域+信息充分度排序
-    souls_sorted = sorted(souls, key=sort_by_dims)
+    souls_sorted = sorted(souls, key=sort_by_name)
 
-    # 三维标签分布
-    info_counts = Counter(s.get("info_sufficiency", "?") for s in souls)
-    dom_counts = Counter(d for s in souls for d in (s.get("function_domains", []) or []))
-    meth_counts = Counter(s.get("methodology_transferability", "?") for s in souls)
+    # ismism 四维分布
 
     # 审查委员会状态
     committee = {}
@@ -313,16 +291,11 @@ def main():
         output = {
             "banner_master": banner_master,
             "total_souls": len(souls),
-            "info_sufficiency_distribution": dict(info_counts),
-            "function_domains_distribution": dict(dom_counts),
-            "methodology_transferability_distribution": dict(meth_counts),
             "souls": [{
                 "name": s["name"],
-                "info_sufficiency": s.get("info_sufficiency"),
-                "function_domains": s.get("function_domains", []),
-                "methodology_transferability": s.get("methodology_transferability"),
                 "title": s.get("title", ""),
                 "refined_at": s.get("refined_at", ""),
+                "ismism_code": s.get("ismism_code", ""),
             } for s in souls_sorted],
             "committee": {
                 "members": committee.get("成员", []),
@@ -354,32 +327,6 @@ def main():
             prefix = "✅" if ok else "⚠️"
             lines.append(f"- {prefix} {msg}")
         lines.append("")
-
-    # ── 三维标签分布 ──
-    lines.append("### 三维标签分布\n")
-    # 信息充分度
-    suf_order = ["充分", "中等", "不足"]
-    suf_parts = []
-    for suf in suf_order:
-        c = info_counts.get(suf, 0)
-        if c > 0:
-            names = [s["name"] for s in souls_sorted if s.get("info_sufficiency") == suf]
-            suf_parts.append(f"{suf}({c}): {'、'.join(names)}")
-    lines.append("- **信息充分度**: " + " | ".join(suf_parts))
-    # 方法论可传输度
-    meth_order = ["可传输", "嵌入型", "人格型"]
-    meth_parts = []
-    for m in meth_order:
-        c = meth_counts.get(m, 0)
-        if c > 0:
-            names = [s["name"] for s in souls_sorted if s.get("methodology_transferability") == m]
-            meth_parts.append(f"{m}({c}): {'、'.join(names)}")
-    lines.append("- **方法论可传输度**: " + " | ".join(meth_parts))
-    # 功能域分布
-    dom_sorted = sorted(dom_counts.items(), key=lambda x: -x[1])
-    dom_parts = [f"{d}({c})" for d, c in dom_sorted]
-    lines.append("- **功能域标签**: " + ", ".join(dom_parts))
-    lines.append("")
 
     # ── 审查委员会 ──
     if committee:
@@ -497,7 +444,6 @@ def main():
         lines.append(f"以下 {len(zero_call)} 魂从未被召唤：{'、'.join(sorted(zero_call))}\n")
 
     print("\n".join(lines))
-
 
 if __name__ == "__main__":
     main()

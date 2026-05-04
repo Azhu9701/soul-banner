@@ -82,7 +82,6 @@ def today_str():
 
 # -- section dividers --
 
-
 def regenerate_lite():
     """重新生成 registry-lite.yaml（仅在 registry.yaml 更新后）"""
     if os.path.exists(REGISTRY_LITE_PATH) and os.path.exists(REGISTRY_PATH):
@@ -204,7 +203,6 @@ def cmd_refine_close(soul_name):
     print("   → graphify: 审查完成后调用 transact.py review-apply")
     return 0
 
-
 def cmd_review_apply(soul_name, review_file, verdict=None, reviewer=None):
     """审查/互审完成后：更新 gold_review → 追加审查记录 → 更新 committee state → 同步 lite → 交叉校验"""
     if not os.path.exists(review_file):
@@ -308,7 +306,6 @@ def cmd_review_apply(soul_name, review_file, verdict=None, reviewer=None):
     print(f"\n✅ 审查落盘完成: {soul_name}")
     print("   → graphify: 调用 Skill(\"graphify\") 更新审查知识图谱")
     return 0
-
 
 def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_file=None,
                          souls_list=None, obsidian_content=None, obsidian_batch=None, obsidian_stdin=None,
@@ -437,7 +434,6 @@ def cmd_possession_close(soul_name, mode, task, effectiveness, notes="", output_
     print("   → humanizer: 若魂输出尚未经 humanizer 处理，请调用 Skill(\"humanizer\")")
     return 0
 
-
 def cmd_dismiss(soul_name, reason=""):
     """散魂：移动 YAML 至归档 → 标记 registry → 重生成 lite → 交叉校验"""
     yaml_path = os.path.join(SOULS_DIR, f"{soul_name}.yaml")
@@ -479,7 +475,6 @@ def cmd_dismiss(soul_name, reason=""):
 
     print(f"\n✅ 散魂完成: {soul_name}")
     return 0
-
 
 def cmd_meeting_prep():
     """会前准备：扫描失败条件 → 检查待办 → 输出议程模板"""
@@ -530,7 +525,6 @@ def cmd_meeting_prep():
 
     return 0
 
-
 def _get_soul_names():
     """从 registry 读取所有已注册魂名"""
     try:
@@ -540,7 +534,6 @@ def _get_soul_names():
         return [s.get("name", "") for s in registry.get("魂魄", []) if s.get("name")]
     except Exception:
         return []
-
 
 def _convert_to_wikilinks(content, soul_names=None):
     """将正文中的魂名替换为 [[魂名]]"""
@@ -568,7 +561,6 @@ def _convert_to_wikilinks(content, soul_names=None):
         result = "---".join(parts)
     return result
 
-
 def _copy_to_vault(source, vault_subdir, filename=None):
     """复制单个文件到 Obsidian vault 子目录，返回目标路径"""
     dest_dir = os.path.join(OBSIDIAN_VAULT, "万民幡", vault_subdir)
@@ -576,7 +568,6 @@ def _copy_to_vault(source, vault_subdir, filename=None):
     dest = os.path.join(dest_dir, filename or os.path.basename(source))
     shutil.copy2(source, dest)
     return dest
-
 
 def _sync_review_to_obsidian(soul_name, review_file, review_filename, reviewer):
     """审查落盘时同步所有关联文件到 Obsidian：主审查报告 + 反向审查 + 魂 YAML"""
@@ -608,7 +599,6 @@ def _sync_review_to_obsidian(soul_name, review_file, review_filename, reviewer):
 
     return synced
 
-
 def _soul_yaml_to_markdown(yaml_path):
     """将魂 YAML 转为 Obsidian Markdown（frontmatter + 可读正文）"""
     soul = load_yaml(yaml_path)
@@ -620,12 +610,8 @@ def _soul_yaml_to_markdown(yaml_path):
         "name": name,
         "title": title,
         "date": soul.get("refined_at", ""),
-        "info_sufficiency": soul.get("info_sufficiency", ""),
-        "function_domains": soul.get("function_domains", []),
-        "methodology_transferability": soul.get("methodology_transferability", ""),
         "reviewed_at": soul.get("reviewed_at", ""),
         "reviewed_by": soul.get("reviewed_by", ""),
-        "tags": ["万民幡", "魂魄"] + soul.get("function_domains", []),
     }
 
     lines = ["---"]
@@ -675,7 +661,6 @@ def _soul_yaml_to_markdown(yaml_path):
             lines.append("")
 
     return "\n".join(lines)
-
 
 def _obsidian_write(mode, task, soul_name, date_str, content, extra_frontmatter=None, filename_suffix=None):
     """向 Obsidian vault 写入单个文件，返回文件路径"""
@@ -741,7 +726,6 @@ def _obsidian_write(mode, task, soul_name, date_str, content, extra_frontmatter=
         f.write(fm + content)
     return filepath
 
-
 def _obsidian_batch(manifest_path):
     """从 manifest JSON 批量写入 Obsidian。manifest 格式：
     {"mode": "合议", "task": "...", "date": "2026-05-02", "files": [
@@ -787,13 +771,11 @@ def _obsidian_batch(manifest_path):
 
     return written
 
-
 def _load_soul_names():
     """从 registry 加载魂名 + 系统角色名"""
     names = _get_soul_names()
     names.extend(["辩证综合官", "审查委员会", "幡主", "万民幡"])
     return names
-
 
 def _copy_with_wiki_links(src, dest, soul_names):
     """复制文件，注入 wiki-link 后写入目标"""
@@ -803,7 +785,6 @@ def _copy_with_wiki_links(src, dest, soul_names):
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     with open(dest, 'w', encoding='utf-8') as f:
         f.write(content)
-
 
 def cmd_obsidian_sync(souls_filter=None, reviews_only=False, dry_run=False):
     """同步 Obsidian vault：魂魄 + 审查报告 + 委员会文档"""
@@ -880,7 +861,6 @@ def cmd_obsidian_sync(souls_filter=None, reviews_only=False, dry_run=False):
     print(f"\n✅ Obsidian 同步完成: {len(synced)} 个文件")
     return 0
 
-
 def cmd_sync_all():
     """全量同步：lite → agent --all → 交叉校验 → 健康检查 → Obsidian"""
     print("🔄 全量同步\n")
@@ -907,7 +887,6 @@ def cmd_sync_all():
 
     print("\n✅ 全量同步完成")
     return 0
-
 
 # ══════════════════════════════════════════════════════════════════
 # 入口
@@ -958,7 +937,6 @@ def parse_args():
 
     return cmd, cleaned, kwargs
 
-
 # task save/restore
 
 def cmd_task_save(tasks_json):
@@ -990,7 +968,6 @@ def cmd_task_save(tasks_json):
     print(f"task-save: {len(tasks)} tasks → state.json ({len(state['pending_tasks'])} total)")
     return 0
 
-
 def cmd_task_restore():
     """从 state.json 恢复活跃 Task"""
     try:
@@ -1009,7 +986,6 @@ def cmd_task_restore():
               for t in active]
     print(json.dumps(output, ensure_ascii=False, indent=2))
     return 0
-
 
 if __name__ == "__main__":
     cmd, pos, kw = parse_args()

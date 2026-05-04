@@ -15,17 +15,14 @@ from datetime import datetime
 SKILL_DIR = Path(__file__).parent.parent
 SOULS_DIR = SKILL_DIR / "souls"
 
-
 def load_soul(name):
     path = SOULS_DIR / f"{name}.yaml"
     if not path.exists():
         return None, None
     return path, path.read_text()
 
-
 def save_soul(path, content):
     path.write_text(content)
-
 
 def get_history(content):
     """从 YAML 中提取 declare_history 列表"""
@@ -56,7 +53,6 @@ def get_history(content):
     if current:
         entries.append(current)
     return entries
-
 
 def propose(name, task, text, reason):
     path, content = load_soul(name)
@@ -122,7 +118,6 @@ def propose(name, task, text, reason):
         print(f"✅ {name} v{next_ver} 已记录")
     return 0
 
-
 def review(name):
     _, content = load_soul(name)
     if not content:
@@ -137,7 +132,6 @@ def review(name):
     for h in pending:
         print(f"  v{h['version']}: {h['trigger']} — {h['proposed_text'][:60]}...")
     return len(pending)
-
 
 def accept(name, version):
     path, content = load_soul(name)
@@ -178,7 +172,6 @@ def accept(name, version):
             print(f"  ℹ️  历史版本超过5个，建议手动清理")
     return 0
 
-
 def main():
     args = sys.argv[1:]
     if len(args) < 1:
@@ -218,7 +211,6 @@ def main():
     else:
         print(f"未知命令: {cmd}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

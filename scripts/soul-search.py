@@ -33,7 +33,6 @@ RESULT_SELECTORS = {
     "google": ("div.g", "h3", "a", ".VwiC3b, span.aCOpRe"),
 }
 
-
 def init_driver():
     sys.path.insert(0, os.path.expanduser("~/GenericAgent"))
     from TMWebDriver import TMWebDriver
@@ -43,7 +42,6 @@ def init_driver():
     if not sessions:
         raise RuntimeError("tmwd-bridge: no active sessions. Open Chrome and verify extension.")
     return d
-
 
 def search_engine(d, engine, query):
     """Search one engine, return top 8 results."""
@@ -70,7 +68,6 @@ def search_engine(d, engine, query):
     result = d.execute_js(js)
     return result.get("data", []) if isinstance(result, dict) else []
 
-
 def search_dimension(d, dim_name, query_cn, query_en, engines=("baidu", "bing", "google")):
     """Search one dimension across specified engines."""
     all_results = []
@@ -86,7 +83,6 @@ def search_dimension(d, dim_name, query_cn, query_en, engines=("baidu", "bing", 
             print(f"  [{engine}] ERROR: {e}", file=sys.stderr)
     return all_results
 
-
 def detect_media_links(all_data):
     """从搜索结果中检测 PDF/音视频/PPT 链接，返回需要 markitdown 转换的列表."""
     media_links = []
@@ -101,7 +97,6 @@ def detect_media_links(all_data):
                     "type": link.rsplit(".", 1)[-1].lower(),
                 })
     return media_links
-
 
 def save_media_links(output_dir, media_links):
     """将检测到的媒体链接写入文件，供后续 markitdown 处理."""
@@ -119,7 +114,6 @@ def save_media_links(output_dir, media_links):
             f.write(f"- 维度：{item['dimension']}\n")
             f.write(f"- 链接：{item['link']}\n\n")
     return md_path
-
 
 def collect(name, output_dir=None):
     """Main entry: search all 8 dimensions for a person, save results."""
@@ -163,7 +157,6 @@ def collect(name, output_dir=None):
     print(f"媒体链接已保存至 {media_path} ({len(media_links)} 个需转换)")
 
     return all_data
-
 
 if __name__ == "__main__":
     import argparse

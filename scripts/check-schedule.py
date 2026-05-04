@@ -13,13 +13,11 @@ import yaml
 
 SCHEDULE_PATH = Path(__file__).resolve().parent.parent / "committee" / ".tasks" / "schedule.yaml"
 
-
 def load_schedule(path: Path) -> dict:
     if not path.exists():
         return {"tasks": [], "reviews": []}
     with open(path) as f:
         return yaml.safe_load(f) or {"tasks": [], "reviews": []}
-
 
 def check_task(task: dict, today: date) -> dict | None:
     """检查单个任务，如有问题返回警告，否则返回 None。"""
@@ -54,7 +52,6 @@ def check_task(task: dict, today: date) -> dict | None:
             "due": str(due_date),
         }
     return None
-
 
 def check_review(review: dict, today: date) -> dict | None:
     """检查审查排期是否有到期的。"""
@@ -108,7 +105,6 @@ def check_review(review: dict, today: date) -> dict | None:
                 "due": end_str,
             }
     return None
-
 
 def main():
     today = date.today()
@@ -184,7 +180,6 @@ def main():
             print(f"\n⚠️  schedule.yaml 上次更新于 {updated} ({days_since} 天前)，可能需要同步 state.json。")
     except (ValueError, TypeError):
         pass
-
 
 if __name__ == "__main__":
     main()

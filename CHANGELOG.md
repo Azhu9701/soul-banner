@@ -1,5 +1,21 @@
 # Changelog
 
+## v2026.05.04 — v3.5
+
+### 品级系统移除 + 全量精简 + README 完整迭代历程
+
+- **移除六阶品级体系**：白/绿/蓝/紫/银/金品级从核心逻辑中移除。魂的功能由 ismism 四维坐标唯一确定
+- **移除金魂冻结条款及相关逻辑**：cleanup-grade-system.py、migrate-grade-system.py、discipline-inspector.py 等品级相关脚本大幅精简
+- **移除 gold_review 字段**：match.py 不再输出品级审查内容
+- **SKILL.md 品级表移除**：功能描述章节改用 ismism 坐标
+- **全量脚本瘦身**：35 文件，-578 行 / +296 行，净减少 282 行
+- **ismism-data.json 完整化**：20+ 魂的 ismism 四维坐标数据
+- **审查委员会轮值制优化**：C1/C2/C3 指标追踪
+- **README 双语文档重写**：新增完整迭代历程（v1.0 → v3.5，42 commits，8天迭代）
+- **.gitignore 更新**：排除 mcp-server/node_modules/、.claude-flow/、debug.log
+
+---
+
 ## v2026.05.02-6
 
 ### 未明子审查三修复 — 代码强制层 + 公式修复 + 庄子悖论

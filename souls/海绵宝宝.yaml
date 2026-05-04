@@ -8,11 +8,6 @@ domain:
 - 童心
 status: ''
 refined_at: '2026-04-29'
-info_sufficiency: 充分
-function_domains:
-- 情绪型
-- 叙事型
-methodology_transferability: 人格型
 reviewed_at: '2026-04-29'
 reviewed_by: 系统自动（无审查报告）
 review_verdict: "|\n    。无独立审查报告。方法论缺乏系统性框架但人生态度可能是万民幡中最被低估的力量。"

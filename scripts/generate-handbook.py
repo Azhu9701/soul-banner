@@ -20,12 +20,10 @@ SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CALL_RECORDS_PATH = os.path.join(SKILL_DIR, "call-records.yaml")
 REGISTRY_PATH = os.path.join(SKILL_DIR, "registry.yaml")
 
-
 def load_yaml(path):
     import yaml
     with open(path) as f:
         return yaml.safe_load(f)
-
 
 def task_kw(task, min_len=2):
     """从任务中提取 bigram 关键词，排除停用词"""
@@ -47,7 +45,6 @@ def task_kw(task, min_len=2):
         if len(w) >= 2:
             tokens.append(w.lower())
     return tokens
-
 
 def extract_topic(task):
     """从任务描述中提取最具代表性的主题短语"""
@@ -72,7 +69,6 @@ def extract_topic(task):
     long = [k for k in freq if len(k) >= 3]
     top = sorted(long, key=lambda k: -freq[k])[:2] if long else [k for k, _ in freq.most_common(2)]
     return "·".join(top) if top else "未分类"
-
 
 def generate_handbook(out_file=None, compact=False):
     """从 call-records 生成匹配手册，返回生成的文本。若指定 out_file 则写入文件。"""
@@ -279,7 +275,6 @@ def generate_handbook(out_file=None, compact=False):
         print(f"✅ 手册: {out_file} ({size}B, ~{est_tokens} tokens)")
     return output
 
-
 def main():
     out_file = None
     compact = False
@@ -300,7 +295,6 @@ def main():
         print(output)
         size = len(output.encode('utf-8'))
         print(f"\n*({size}B, ~{size//4} tokens)*", file=sys.stderr)
-
 
 if __name__ == "__main__":
     main()

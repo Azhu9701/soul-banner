@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""用文本注入方式为 soul YAML 添加三维标签，保留所有 multiline 格式。"""
+"""用文本注入方式为 soul YAML 添加，保留所有 multiline 格式。"""
 import os
 import re
 
@@ -54,14 +54,10 @@ for fname in sorted(os.listdir(SOULS_DIR)):
     if '\ngrade_reason:' in text and '\nlegacy_grade_reason:' not in text:
         text = text.replace('\ngrade_reason:', '\nlegacy_grade_reason:')
 
-    # 3. 在 legacy_grade_reason: | 块结束后注入三维标签
+    # 3. 在 legacy_grade_reason: | 块结束后注入
     # 找到 grade_reason 块的结束位置（下一个顶级字段开始处）
     # 简单策略：在 refined_at 行后注入
-    if '\ninfo_sufficiency:' not in text:
         func_str = str(func_doms)
-        injection = f"""info_sufficiency: {info_suf}
-function_domains: {func_str}
-methodology_transferability: {meth_trans}
 """
         # 找到 refined_at 或 reviewed_at 行后插入
         for anchor in ["reviewed_at:", "refined_at:"]:

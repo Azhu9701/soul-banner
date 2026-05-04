@@ -50,7 +50,6 @@ HIGH_SUMMON_THRESHOLD = 5
 DECAY_CONSECUTIVE_NO_EFFECT = 5   # 连续N次无「有效」→ 召唤限制
 DECAY_ZERO_SUMMON_DAYS = 90       # 连续N天零召唤 → 散魂警告
 
-
 def load_registry():
     """加载 registry.yaml 和 call-records.yaml，返回 (souls, global_records)"""
     try:
@@ -72,11 +71,9 @@ def load_registry():
 
     return souls, records
 
-
 def get_summon_counts(global_records: list[dict]) -> Counter:
     """从顶层召唤记录统计每个魂的召唤次数"""
     return Counter(r["soul"] for r in global_records if isinstance(r, dict) and "soul" in r)
-
 
 def get_effectiveness_summary(global_records: list[dict]) -> dict:
     """按魂统计 effectiveness 分布"""
@@ -92,7 +89,6 @@ def get_effectiveness_summary(global_records: list[dict]) -> dict:
         summary[name][eff] = summary[name].get(eff, 0) + 1
     return summary
 
-
 def check_never_summoned(souls: list[dict], counts: Counter) -> list[dict]:
     """检查是否有魂从未被召唤（trigger 可能太窄），并生成推荐信息"""
     issues = []
@@ -101,7 +97,6 @@ def check_never_summoned(souls: list[dict], counts: Counter) -> list[dict]:
         if name not in counts or counts[name] == 0:
             trigger = s.get("trigger_keywords_summary", "N/A")
             scenarios = s.get("trigger_scenarios_summary", "N/A")
-            func_doms = s.get("function_domains", [])
             domains = s.get("domain", [])
 
             # 生成推荐信息
@@ -114,7 +109,6 @@ def check_never_summoned(souls: list[dict], counts: Counter) -> list[dict]:
                     "soul": name,
                     "type": "never_summoned",
                     "summoned_count": 0,
-                    "function_domains": func_doms,
                     "domains": domains,
                     "trigger_summary": trigger[:100] if trigger else "N/A",
                     "scenarios": scenarios if scenarios else "N/A",
@@ -123,7 +117,6 @@ def check_never_summoned(souls: list[dict], counts: Counter) -> list[dict]:
                 }
             )
     return issues
-
 
 def _build_zero_summon_recommendation(name: str, func_doms: list[str], domains: list[str], scenarios: str, all_souls: list[dict]) -> dict:
     """为零召唤魂生成推荐：适用场景、兼容魂配对、推荐任务类型"""
@@ -163,10 +156,9 @@ def _build_zero_summon_recommendation(name: str, func_doms: list[str], domains: 
         ],
         "suggested_task_types": task_types,
         "zero_summon_risk": (
-            f"{dom_str}功能域魂零召唤——该领域视角未激活"
+            f"{dom_str}场域魂零召唤——该领域视角未激活"
         )
     }
-
 
 def check_high_summon_no_effect(souls: list[dict], counts: Counter, eff_summary: dict, threshold: int = HIGH_SUMMON_THRESHOLD) -> list[dict]:
     """检查召唤次数 > threshold 但无 effectiveness: 有效"""
@@ -189,7 +181,6 @@ def check_high_summon_no_effect(souls: list[dict], counts: Counter, eff_summary:
                 }
             )
     return issues
-
 
 def check_stale_refinement(souls: list[dict], threshold_days: int = STALE_THRESHOLD_DAYS) -> list[dict]:
     """检查是否有魂炼化超过 threshold_days 天未更新 refined_at"""
@@ -222,7 +213,6 @@ def check_stale_refinement(souls: list[dict], threshold_days: int = STALE_THRESH
                 )
     return issues
 
-
 def check_orphan_records(global_records: list[dict], souls: list[dict]) -> list[dict]:
     """检查顶层召唤记录中是否有孤魂引用（魂名不在魂魄列表中）"""
     issues = []
@@ -241,7 +231,6 @@ def check_orphan_records(global_records: list[dict], souls: list[dict]) -> list[
                 }
             )
     return issues
-
 
 def check_decay(souls: list[dict], global_records: list[dict], counts: Counter) -> list[dict]:
     """定期衰减审查：
@@ -263,8 +252,6 @@ def check_decay(souls: list[dict], global_records: list[dict], counts: Counter) 
 
     for s in souls:
         name = s.get("name", "?")
-        func_doms = s.get("function_domains", [])
-        info_suf = s.get("info_sufficiency", "?")
         records = soul_records.get(name, [])
 
         # 1) 连续低效检测
@@ -284,7 +271,6 @@ def check_decay(souls: list[dict], global_records: list[dict], counts: Counter) 
                 issues.append({
                     "soul": name,
                     "type": "decay_low_effectiveness",
-                    "function_domains": func_doms,
                     "consecutive_no_effect": consecutive_no_effect,
                     "detail": (
                         f"连续 {consecutive_no_effect} 次附体无「有效」评级 → "
@@ -303,8 +289,6 @@ def check_decay(souls: list[dict], global_records: list[dict], counts: Counter) 
                     issues.append({
                         "soul": name,
                         "type": "decay_zero_summon",
-                        "function_domains": func_doms,
-                        "info_sufficiency": info_suf,
                         "days_since_refined": days_since_refine,
                         "detail": (
                             f"炼化 {days_since_refine} 天，零召唤 → "
@@ -318,7 +302,7 @@ def check_decay(souls: list[dict], global_records: list[dict], counts: Counter) 
                     })
 
         # 3) 方法论前提被历史证伪检测（标记——需人工判断）
-        # 当前标记逻辑：信息充分度=充分且零召唤且炼化超过 180 天
+        # 当前标记逻辑：信息=充分且零召唤且炼化超过 180 天
         if info_suf == "充分" and count == 0:
             dt = _parse_refined_date(s.get("refined_at", ""))
             if dt:
@@ -327,18 +311,15 @@ def check_decay(souls: list[dict], global_records: list[dict], counts: Counter) 
                     issues.append({
                         "soul": name,
                         "type": "decay_premise_review",
-                        "function_domains": func_doms,
-                        "info_sufficiency": info_suf,
                         "days_since_refined": days_since_refine,
                         "detail": (
-                            f"信息充分度=充分的魂炼化 {days_since_refine} 天，零召唤 → "
+                            f"信息=充分的魂炼化 {days_since_refine} 天，零召唤 → "
                             f"审查委员会需裁定：方法论前提是否已被历史证伪？"
                         ),
                         "recommended_action": "审查委员会复审 → 维持/调整/散魂",
                     })
 
     return issues
-
 
 # === 三维遗忘审查 ===
 
@@ -390,7 +371,6 @@ def check_substitutability(souls: list, counts: Counter, eff_summary: dict) -> l
                 issues.append({
                     "soul": name_a,
                     "type": "decay_substitutability",
-                    "function_domains": s_a.get("function_domains", []),
                     "overlapping_domains": sorted(overlap),
                     "substituted_by": name_b,
                     "substitute_stats": f"{name_b}: {b_total}次召唤, 有效{b_effective}",
@@ -402,7 +382,6 @@ def check_substitutability(souls: list, counts: Counter, eff_summary: dict) -> l
                 })
 
     return issues
-
 
 def check_premise_validity(souls: list, counts: Counter) -> list[dict]:
     """维度三：方法论前提——核心前提是否已被历史证伪或消失
@@ -436,8 +415,6 @@ def check_premise_validity(souls: list, counts: Counter) -> list[dict]:
             issues.append({
                 "soul": name,
                 "type": "decay_premise_fragile",
-                "function_domains": s.get("function_domains", []),
-                "info_sufficiency": s.get("info_sufficiency", "?"),
                 "premise": kfp["premise"],
                 "risk": kfp["risk"],
                 "recommended_action": kfp["action"],
@@ -446,7 +423,6 @@ def check_premise_validity(souls: list, counts: Counter) -> list[dict]:
             })
 
     return issues
-
 
 def generate_forgetting_recommendations(souls: list, all_issues: list) -> list[dict]:
     """汇总三维遗忘分析，生成遗忘审查建议。
@@ -464,16 +440,14 @@ def generate_forgetting_recommendations(souls: list, all_issues: list) -> list[d
             continue
 
         name = issue.get("soul", "?")
-        func_doms = issue.get("function_domains", [])
 
         rec = {
             "soul": name,
-            "function_domains": func_doms,
             "decay_type": issue["type"],
             "detail": issue.get("detail", ""),
             "終末審查四問": [
-                f"1. {name}没有被使用/低效的原因是：(a)幡主任务分布不覆盖其领域 (b)方法论前提已消失 (c)有更好的魂替代了它 (d)功能域标签本身是错的？",
-                f"2. 如果{name}在今天才被收魂炼化，三维标签会不同吗？",
+                f"1. {name}没有被使用/低效的原因是：(a)幡主任务分布不覆盖其领域 (b)方法论前提已消失 (c)有更好的魂替代了它 (d)本身是错的？",
+                f"2. 如果{name}在今天才被收魂炼化，会不同吗？",
                 f"3. {name}在幡期间是否产生过间接价值（审查对照角色/学习答辩对立面/匹配审查参照物）？",
                 f"4. 散魂后，{name}覆盖的领域是否出现空白？如果是——谁来补？",
             ],
@@ -483,14 +457,12 @@ def generate_forgetting_recommendations(souls: list, all_issues: list) -> list[d
 
     return recs
 
-
 def save_last_run():
     """保存本次运行时间戳"""
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     with open(LAST_RUN_FILE, "w") as f:
         f.write(timestamp)
     return timestamp
-
 
 def check_last_run_age() -> tuple[str, float]:
     """检查上次运行距今多久（小时）"""
@@ -503,7 +475,6 @@ def check_last_run_age() -> tuple[str, float]:
         return last, hours
     except (FileNotFoundError, ValueError):
         return "从未运行", 999.0
-
 
 def write_log(all_issues: list[dict], timestamp: str):
     """写入日志文件"""
@@ -521,7 +492,6 @@ def write_log(all_issues: list[dict], timestamp: str):
                 detail = issue.get("detail", "")
                 f.write(f"  [{i}] {soul} — {itype}\n")
                 f.write(f"      {detail}\n")
-
 
 def main():
     output_json = "--json" in sys.argv
@@ -577,7 +547,7 @@ def main():
     else:
         print(f"万民幡 Registry 健康检查 — {timestamp}")
         print(f"共 {len(souls)} 魂 | 顶层召唤记录 {len(global_records)} 条\n")
-        print("品级分布（自动统计）：")
+        print("分布（自动统计）：")
         for g in grade_order:
             if g in grade_dist:
                 symbol = grade_symbol_map.get(g, '')
@@ -605,7 +575,7 @@ def main():
                 if itype == "never_summoned" and "recommendation" in issue:
                     rec = issue["recommendation"]
                     grade = issue.get("grade", "?")
-                    print(f"      品级: {grade}")
+                    print(f"      : {grade}")
                     print(f"      风险: {rec.get('zero_summon_risk', 'N/A')}")
                     print(f"      适用场景: {rec.get('scenarios', 'N/A')[:120]}")
                     pairs = rec.get("compatible_pairs", [])
@@ -639,7 +609,6 @@ def main():
             print("\n全部检查通过，无异常。")
 
     sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

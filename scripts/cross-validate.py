@@ -6,7 +6,6 @@
   python3 scripts/cross-validate.py --fix        # 检查并自动修复
 
 检查项目:
-  1. soul YAML 中三维标签（info_sufficiency/function_domains/methodology_transferability）与 registry 是否一致
   2. soul YAML 是否有 reviewed_at/reviewed_by/review_verdict
   3. registry 中是否有 gold_review（金/银/紫魂）
   4. reviews/ 目录中存在的审查报告是否在 registry 审查记录中有对应条目
@@ -37,7 +36,7 @@ REVIEW_SOUL_MAP = {
     '罗永浩': ['幡主审查-列宁审罗永浩-2026-04-29.md'],
     '鲁迅': ['列宁审鲁迅-2026-04-30.md'],
     '马斯克': ['幡主审查-列宁审马斯克-2026-04-29.md'],
-    '毛泽东': ['充分度魂互审-列宁审毛泽东-2026-04-29.md'],
+    '毛泽东': ['魂互审-列宁审毛泽东-2026-04-29.md'],
     '乔布斯': ['幡主审查-列宁审乔布斯-2026-04-29.md', '新魂审查-毛泽东审费曼乔布斯-2026-04-29.md'],
     '伊本赫勒敦': ['列宁审伊本赫勒敦-2026-04-30.md'],
     '未明子': [
@@ -48,12 +47,11 @@ REVIEW_SOUL_MAP = {
     ],
     'Karpathy': ['新魂互审-费曼审Karpathy-2026-04-29.md'],
     '列宁': [
-        '充分度魂互审-费曼审列宁-2026-05-01.md',
-        '充分度魂互审-鲁迅审列宁-2026-05-01.md',
+        '魂互审-费曼审列宁-2026-05-01.md',
+        '魂互审-鲁迅审列宁-2026-05-01.md',
         '反向审查-未明子审列宁-2026-05-01.md',
     ],
 }
-
 
 def check(fix=False):
     errors = []
@@ -75,7 +73,6 @@ def check(fix=False):
         if name not in souls_yaml:
             errors.append(f'Soul {name} in registry but YAML missing')
             continue
-        for field in ['info_sufficiency', 'function_domains', 'methodology_transferability']:
             reg_val = entry.get(field)
             yaml_val = souls_yaml[name]['data'].get(field)
             if reg_val != yaml_val:
@@ -95,15 +92,13 @@ def check(fix=False):
             if field not in data or not data[field]:
                 missing.append(field)
         if missing:
-            info_suf = data.get('info_sufficiency', '?')
-            # 信息充分度不足的魂无审查要求
+            # 信息不足的魂无审查要求
             if info_suf == '不足':
                 continue
             warnings.append(f'Soul YAML {name} (info_suf={info_suf}) missing: {missing}')
 
-    # ── Check 3: registry gold_review for 信息充分度=充分的魂 ──
+    # ── Check 3: registry gold_review for 信息=充分的魂 ──
     for name, entry in souls_registry.items():
-        if entry.get('info_sufficiency') == '充分':
             if 'gold_review' not in entry or not entry.get('gold_review'):
                 if name in souls_yaml:
                     ydata = souls_yaml[name]['data']
@@ -182,7 +177,6 @@ def check(fix=False):
             print(f'  • {f}')
 
     return len(errors) == 0
-
 
 if __name__ == '__main__':
     fix_mode = '--fix' in sys.argv

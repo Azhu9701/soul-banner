@@ -12,7 +12,6 @@ SKILL_DIR = Path(__file__).parent.parent
 SOULS_DIR = SKILL_DIR / "souls"
 ISMISM_PATH = SKILL_DIR / "ismism-data.json"
 
-
 def load_declares():
     """从 soul YAML 中提取所有魂的 self_declare + ismism 编码"""
     declares = {}
@@ -26,14 +25,12 @@ def load_declares():
         declares[name] = {"declare": declare, "code": code}
     return declares
 
-
 def load_ismism():
     """加载 ismism-data.json 获取 compat/incompat/blindspots"""
     if ISMISM_PATH.exists():
         with open(ISMISM_PATH) as f:
             return json.load(f)
     return {}
-
 
 def format_broadcast(task: str, declares: dict[str, dict], ismism: dict[str, dict]) -> str:
     """生成互见广播 prompt — v0.2 新增盲区-强项交叉表和互见指令"""
@@ -151,14 +148,12 @@ def format_broadcast(task: str, declares: dict[str, dict], ismism: dict[str, dic
 
     return "\n".join(lines)
 
-
 def main():
     task = sys.argv[1] if len(sys.argv) > 1 else input("任务描述: ")
     declares = load_declares()
     ismism = load_ismism()
     print(format_broadcast(task, declares, ismism))
     print(f"\n> 以上 {len(declares)} 魂已就绪。互见模式启动。")
-
 
 if __name__ == "__main__":
     main()

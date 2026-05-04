@@ -4,12 +4,10 @@ import os
 import subprocess
 import sys
 
-
 def load_yaml(path):
     import yaml
     with open(path) as f:
         return yaml.safe_load(f)
-
 
 def save_yaml(path, data):
     import yaml
@@ -17,9 +15,7 @@ def save_yaml(path, data):
         yaml.dump(data, f, allow_unicode=True, default_flow_style=False,
                   sort_keys=False, width=200)
 
-
 SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 def run_script(script_rel_path, *args):
     """运行 scripts/ 下的 Python 脚本，返回 (ok, stdout)。"""
@@ -34,7 +30,6 @@ def run_script(script_rel_path, *args):
         return r.returncode == 0, r.stdout.strip() + "\n" + r.stderr.strip()
     except Exception as e:
         return False, str(e)
-
 
 def run_cmd(cmd, description="", cwd=None):
     """运行 shell 命令，返回 (success, output)。cwd 默认为 SKILL_DIR。"""

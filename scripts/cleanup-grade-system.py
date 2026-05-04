@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""清理品级体系残留 v2 — 深度清洗 gold_review / 审查记录 / _match_summary"""
+"""清理体系残留 v2 — 深度清洗 gold_review / 审查记录 / _match_summary"""
 
 import yaml
 import re
@@ -24,16 +24,16 @@ REPLACEMENTS = [
     (r'维持蓝魂[，。、]?\s*', ''),
     (r'维持绿魂[，。、]?\s*', ''),
     (r'维持白魂[，。、]?\s*', ''),
-    # 品级引用
+    # 引用
     (r'金魂候选[。，]?\s*', ''),
     (r'满足金魂三条标准[：:]\s*', ''),
-    (r'金魂三条', '三维标签'),
+    (r'金魂三条', ''),
     (r'\[条件金魂\]\s*', ''),
     (r'金魂中最[^\s，。]+的\s*', ''),
     # 两金魂/三金魂等
     (r'两金魂共存', '两魂共存'),
     (r'三金魂', '三魂'),
-    # 金魂(1)/金魂(2)/金魂(3) — 旧的品级标准引用
+    # 金魂(1)/金魂(2)/金魂(3) — 旧的标准引用
     (r'金魂\(1\)', '标准1'),
     (r'金魂\(2\)', '标准2'),
     (r'金魂\(3\)', '标准3'),
@@ -46,21 +46,21 @@ REPLACEMENTS = [
     (r'维持紫魂[，。]?\s*', ''),
     # 蓝魂相关
     (r'蓝魂[🔵，。、]?\s*', ''),
-    (r'品级[：:]\s*蓝魂[🔵\s]*[。，]?\s*', ''),
-    # 品级体系术语
-    (r'品级论证[：:][^。\n]*[。]?', ''),
-    (r'品级论证成立[，。]?\s*', ''),
-    (r'原品级论证[：:]?\s*', ''),
+    (r'[：:]\s*蓝魂[🔵\s]*[。，]?\s*', ''),
+    # 体系术语
+    (r'论证[：:][^。\n]*[。]?', ''),
+    (r'论证成立[，。]?\s*', ''),
+    (r'原论证[：:]?\s*', ''),
     (r'降品审查[（(]金→银[）)]', '重新审查'),
     (r'降品[。，]?\s*', ''),
     (r'不降品[。，]?\s*', ''),
     (r'距金魂差\d+分[，。]?\s*', ''),
     (r'金魂=\d+分[，。]?\s*', ''),
     # 文件路径中的金魂
-    (r'金魂互审', '充分度魂互审'),
+    (r'金魂互审', '魂互审'),
     # 通用金魂/银魂引用（在非代码上下文中）
-    (r'搭配马克思主义金魂', '搭配马克思主义信息充分度充分的魂'),
-    (r'搭配金魂', '搭配信息充分度充分的魂'),
+    (r'搭配马克思主义金魂', '搭配马克思主义信息充分的魂'),
+    (r'搭配金魂', '搭配信息充分的魂'),
 ]
 
 def clean_text(text):
@@ -105,7 +105,7 @@ def fix_registry():
                         changes += 1
                         print(f"  {name}.审查记录.裁定 清洗: {old[:40]}... → {new[:40]}...")
                 if '报告' in r and r['报告']:
-                    r['报告'] = r['报告'].replace('金魂互审', '充分度魂互审')
+                    r['报告'] = r['报告'].replace('金魂互审', '魂互审')
 
         # 清洗 notes
         if 'notes' in s and s['notes']:
@@ -179,7 +179,7 @@ def fix_soul_yamls():
         content = re.sub(r'维持银魂', '', content)
         content = re.sub(r'维持紫魂', '', content)
         content = re.sub(r'维持蓝魂[🔵\s]*', '', content)
-        content = re.sub(r'金魂互审', '充分度魂互审', content)
+        content = re.sub(r'金魂互审', '魂互审', content)
         content = re.sub(r'金魂候选', '', content)
         content = re.sub(r'银魂🥈', '', content)
         content = re.sub(r'银魂', '', content)
@@ -200,7 +200,7 @@ def final_check():
 
     # Check registry
     r = subprocess.run(
-        ['grep', '-c', '金魂|银魂|蓝魂|紫魂|绿魂|白魂|品级[^说]|grade_reason'],
+        ['grep', '-c', '金魂|银魂|蓝魂|紫魂|绿魂|白魂|[^说]|grade_reason'],
         cwd=str(SKILL_DIR), capture_output=True, text=True,
         input='registry.yaml'
     )
@@ -211,7 +211,7 @@ def final_check():
         # Find remaining grade references
         lines_with_grades = []
         for i, line in enumerate(content.split('\n'), 1):
-            if re.search(r'金魂|银魂|蓝魂|紫魂|绿魂|白魂|品级(?!说明)', line):
+            if re.search(r'金魂|银魂|蓝魂|紫魂|绿魂|白魂|(?!说明)', line):
                 # Skip summon_prompt/mind/voice - these are soul self-descriptions
                 lines_with_grades.append(f"  L{i}: {line.strip()[:100]}")
         if lines_with_grades:

@@ -23,7 +23,6 @@ REVIEWS_DIR = SKILL_DIR / "reviews"
 SOULS_DIR = SKILL_DIR / "souls"
 VAULT_ROOT = os.path.join(OBSIDIAN_VAULT, "万民幡")
 
-
 def find_missing():
     """返回所有缺失的同步项 (source, dest, category)"""
     missing = []
@@ -66,7 +65,6 @@ def find_missing():
 
     return missing
 
-
 def sync_missing(missing, dry_run=False):
     """补同步缺失文件"""
     synced = 0
@@ -98,7 +96,6 @@ def sync_missing(missing, dry_run=False):
             synced += 1
 
     return synced
-
 
 def main():
     check_only = "--check" in sys.argv
@@ -139,7 +136,6 @@ def main():
 
     print("✅ 所有文件已同步至 Obsidian")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

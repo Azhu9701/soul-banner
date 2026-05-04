@@ -31,7 +31,6 @@ SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CALL_RECORDS_PATH = os.path.join(SKILL_DIR, "call-records.yaml")
 MAX_TOKENS_DEFAULT = 200
 
-
 def load_call_records():
     """加载召唤记录，返回记录列表"""
     try:
@@ -50,7 +49,6 @@ def load_call_records():
         return data.get("召唤记录", data.get("records", []))
     return data if isinstance(data, list) else []
 
-
 def tokenize_keywords(text: str) -> set[str]:
     """提取关键词：中文用n-gram（2-4字）+ 英文词"""
     tokens = set()
@@ -64,7 +62,6 @@ def tokenize_keywords(text: str) -> set[str]:
                 tokens.add(span[i:i+n])
     return tokens
 
-
 def jaccard_similarity(set_a: set[str], set_b: set[str]) -> float:
     """Jaccard 相似度"""
     if not set_a or not set_b:
@@ -72,7 +69,6 @@ def jaccard_similarity(set_a: set[str], set_b: set[str]) -> float:
     intersection = len(set_a & set_b)
     union = len(set_a | set_b)
     return intersection / union if union > 0 else 0.0
-
 
 def direct_keyword_overlap(text_a: str, text_b: str) -> float:
     """直接关键词重叠：检查短文本的关键词是否在长文本中出现"""
@@ -88,7 +84,6 @@ def direct_keyword_overlap(text_a: str, text_b: str) -> float:
     hits = sum(1 for kw in keywords if kw in longer)
     return hits / len(keywords)
 
-
 def combined_similarity(task_a: str, task_b: str) -> float:
     """组合相似度：Jaccard + 直接关键词重叠"""
     kws_a = tokenize_keywords(task_a)
@@ -96,7 +91,6 @@ def combined_similarity(task_a: str, task_b: str) -> float:
     jac = jaccard_similarity(kws_a, kws_b)
     direct = direct_keyword_overlap(task_a, task_b)
     return jac * 0.4 + direct * 0.6  # 直接匹配权重更高
-
 
 def find_similar_possessions(records: list, soul: str, task: str, top_n: int = 5, min_similarity: float = 0.1) -> list:
     """查找与当前任务相似的历史附体。
@@ -138,13 +132,11 @@ def find_similar_possessions(records: list, soul: str, task: str, top_n: int = 5
 
     return candidates[:top_n]
 
-
 def estimate_tokens(text: str) -> int:
     """粗略估计 token 数：中文 ≈ 字符数/1.5，英文 ≈ 词数"""
     chinese_chars = len(re.findall(r'[一-鿿]', text))
     english_words = len(re.findall(r'[a-zA-Z]+', text))
     return int(chinese_chars / 1.5 + english_words) + 50  # +50 缓冲
-
 
 def format_context(similar: list, max_tokens: int = MAX_TOKENS_DEFAULT) -> str:
     """将相似附体格式化为上下文注入段"""
@@ -187,7 +179,6 @@ def format_context(similar: list, max_tokens: int = MAX_TOKENS_DEFAULT) -> str:
 
     return "\n".join(lines)
 
-
 def main():
     parser = argparse.ArgumentParser(description="附体上下文注入")
     parser.add_argument("--soul", required=True, help="魂名")
@@ -227,7 +218,6 @@ def main():
             print(f"\n<!-- 找到 {result['similar_possessions']} 条相关附体，最高相似度 {result['top_similarity']} -->")
         else:
             print(f"# 无相关历史附体（查询了 {len(records)} 条记录）")
-
 
 if __name__ == "__main__":
     main()

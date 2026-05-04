@@ -18,8 +18,6 @@ v2.0 映射规则:
     soul YAML                          → agent frontmatter
     ─────────────────────────────────────────────────────
     name                               → name
-    function_domains + domain + title  → description
-    methodology_transferability        → color (可传输=blue, 嵌入型=green, 人格型=purple)
     summon_prompt                      → agent body (核心人格)
 """
 
@@ -39,14 +37,11 @@ METHODOLOGY_COLOR = {
     "人格型": "purple",
 }
 
-
 def build_description(soul: dict) -> str:
-    fds = soul.get("function_domains", [])
     fd_str = ", ".join(fds) if fds else "?"
     domains = soul.get("domain", [])[:5]
     domain_str = ", ".join(domains)
     title = soul.get("title", "")
-    mt = soul.get("methodology_transferability", "")
 
     desc = f"{fd_str} | {domain_str}"
     if title:
@@ -55,10 +50,8 @@ def build_description(soul: dict) -> str:
         desc += f"。方法论: {mt}"
     return desc
 
-
 def generate_agent(name: str, soul: dict) -> str:
     description = build_description(soul)
-    mt = soul.get("methodology_transferability", "")
     color = METHODOLOGY_COLOR.get(mt, "gray")
     summon_prompt = soul.get("summon_prompt", "").strip()
 
@@ -74,7 +67,6 @@ memory: project
 {summon_prompt}
 """
     return frontmatter
-
 
 def sync_one(soul_path: Path, agents_dir: Path, dry_run: bool = False) -> tuple[str, int, bool]:
     with open(soul_path) as f:
@@ -94,7 +86,6 @@ def sync_one(soul_path: Path, agents_dir: Path, dry_run: bool = False) -> tuple[
             f.write(content)
 
     return name, len(content), existed
-
 
 def sync_all(registry_path: Path, agents_dir: Path, dry_run: bool = False):
     with open(registry_path) as f:
@@ -128,7 +119,6 @@ def sync_all(registry_path: Path, agents_dir: Path, dry_run: bool = False):
                 if agent_name not in ("列宁审查官", "辩证综合官"):
                     print(f"  ⚠  孤立 agent: {agent_file}（无对应 soul YAML）")
 
-
 def main():
     parser = argparse.ArgumentParser(description="从 soul YAML 同步 agent 文件")
     parser.add_argument("soul", nargs="?", help="soul YAML 文件路径")
@@ -154,7 +144,6 @@ def main():
     else:
         parser.print_help()
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

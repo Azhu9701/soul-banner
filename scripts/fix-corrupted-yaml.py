@@ -7,7 +7,6 @@ from pathlib import Path
 SOULS_DIR = Path("/Users/huyi/.claude/skills/soul-banner/souls")
 
 # ── 需要保持原样输出的顶层列表类字段 ──
-LIST_FIELDS = {'domain', 'skills_expertise', 'source_materials', 'function_domains'}
 
 # ── 多行字符串字段 ──
 MULTILINE_FIELDS = {'mind', 'voice', 'summon_prompt', 'notes', 'gold_review',
@@ -69,7 +68,7 @@ def rebuild_as_dict(filepath):
             elif value.startswith('"') and value.endswith('"'):
                 value = value[1:-1].strip()
 
-            # 清理品级残留
+            # 清理残留
             value = re.sub(r'维持金魂🟡[。，]?\s*', '', value)
             value = re.sub(r'维持金魂[。，]?\s*', '', value)
             value = re.sub(r'升金魂🟡[。，]?\s*', '', value)
@@ -78,7 +77,7 @@ def rebuild_as_dict(filepath):
             value = re.sub(r'维持紫魂[。，]?\s*', '', value)
             value = re.sub(r'维持蓝魂[🔵，。、]?\s*', '', value)
             value = re.sub(r'金魂候选[。，]?\s*', '', value)
-            value = re.sub(r'金魂互审', '充分度魂互审', value)
+            value = re.sub(r'金魂互审', '魂互审', value)
             value = re.sub(r'金魂中最[^\s，。]+\s*', '', value)
             value = re.sub(r'\[条件金魂\]\s*', '', value)
             value = re.sub(r'金魂\((\d)\)', r'标准\1', value)
@@ -103,8 +102,8 @@ def rebuild_as_dict(filepath):
             value = re.sub(r'银魂\b', '', value)
             value = re.sub(r'蓝魂\b', '', value)
             value = re.sub(r'紫魂\b', '', value)
-            value = re.sub(r'品级[：:][^\n]*', '', value)
-            value = re.sub(r'品级论证[：:][^\n]*', '', value)
+            value = re.sub(r'[：:][^\n]*', '', value)
+            value = re.sub(r'论证[：:][^\n]*', '', value)
             value = re.sub(r'降品审查[（(]金→银[）)]', '重新审查', value)
             value = re.sub(r'降品[。，]?\s*', '', value)
             value = re.sub(r'距金魂差\d+分[，。]?\s*', '', value)
@@ -126,7 +125,6 @@ def rebuild_as_dict(filepath):
             result[key_name] = parse_review_records(raw_value)
         elif key_name == 'patches':
             result[key_name] = []
-        elif key_name in ('info_sufficiency', 'methodology_transferability',
                           'status', 'name', 'title', 'refined_at',
                           'reviewed_at', 'reviewed_by'):
             # 简单标量
@@ -238,17 +236,17 @@ def parse_review_records(raw):
         if m:
             key = m.group(1)
             val = m.group(2).strip().strip("'").strip('"')
-            # 清理 裁定 中的品级引用
+            # 清理 裁定 中的引用
             if key == '裁定':
                 val = re.sub(r'维持金魂[🟡，。、]?\s*', '', val)
                 val = re.sub(r'维持银魂[🥈，。、]?\s*', '', val)
                 val = re.sub(r'维持蓝魂[🔵，。、]?\s*', '', val)
                 val = re.sub(r'维持紫魂[，。、]?\s*', '', val)
                 val = re.sub(r'升金魂[🟡，。、]?\s*', '', val)
-                val = re.sub(r'金魂互审', '充分度魂互审', val)
+                val = re.sub(r'金魂互审', '魂互审', val)
                 val = val.strip()
             if key == '报告':
-                val = val.replace('金魂互审', '充分度魂互审')
+                val = val.replace('金魂互审', '魂互审')
             current[key] = val
     if current:
         result.append(current)
@@ -258,7 +256,6 @@ def write_yaml(filepath, data):
     """写出合法 YAML"""
     # 确定 key 顺序
     key_order = ['name', 'title', 'domain', 'status', 'refined_at',
-                 'info_sufficiency', 'function_domains', 'methodology_transferability',
                  'reviewed_at', 'reviewed_by', 'review_verdict', 'gold_review',
                  'mind', 'voice', 'skills_expertise', 'trigger',
                  '_match_summary', 'trigger_keywords_summary',
@@ -298,7 +295,6 @@ def write_yaml(filepath, data):
 
     return True
 
-
 def main():
     ok = 0
     failed = []
@@ -322,7 +318,6 @@ def main():
         print("失败:")
         for name, err in failed:
             print(f"  {name}: {err[:150]}")
-
 
 if __name__ == "__main__":
     main()

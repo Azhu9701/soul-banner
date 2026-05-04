@@ -23,3 +23,8 @@ __pycache__/
 
 # 系统文件
 .DS_Store
+debug.log
+
+# 外部工具依赖
+mcp-server/node_modules/
+.claude-flow/

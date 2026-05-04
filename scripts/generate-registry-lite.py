@@ -14,15 +14,11 @@ import yaml
 
 LITE_FIELDS = [
     "name",
-    "info_sufficiency",
-    "function_domains",
-    "methodology_transferability",
     "domain",
     "trigger_keywords_summary",
     "trigger_scenarios_summary",
     "trigger_exclude_summary",
 ]
-
 
 def generate(registry_path: Path) -> dict:
     with open(registry_path) as f:
@@ -42,7 +38,6 @@ def generate(registry_path: Path) -> dict:
         lite["魂魄"].append(entry)
 
     return lite
-
 
 def main():
     parser = argparse.ArgumentParser(description="生成 registry-lite.yaml")
@@ -71,7 +66,6 @@ def main():
         print(f"OK: {out_path} ({len(lite['魂魄'])} 魂, {len(yaml_str)} chars)")
     else:
         print(yaml_str)
-
 
 if __name__ == "__main__":
     main()

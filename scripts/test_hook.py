@@ -30,7 +30,6 @@ EVAL_QUERIES = [
     ("帮我写个 Python 脚本，从 API 拉取数据存入 PostgreSQL，加上错误重试和日志", False),
 ]
 
-
 def run_hook(prompt: str) -> dict:
     """运行 hook 脚本并返回解析后的 JSON 输出"""
     input_data = json.dumps({"user_prompt": prompt})
@@ -42,7 +41,6 @@ def run_hook(prompt: str) -> dict:
         timeout=5,
     )
     return json.loads(result.stdout.strip() or "{}")
-
 
 def main():
     should_trigger_tests = [(q, e) for q, e in EVAL_QUERIES if e]
@@ -97,7 +95,6 @@ def main():
     print("=" * 70)
 
     return 0 if correct == total else 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

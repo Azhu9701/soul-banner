@@ -27,7 +27,6 @@ ENGLISH_CHAR_RATIO = 4.0
 LINE_THRESHOLD = 100
 SIMILARITY_THRESHOLD = 0.6  # 句子相似度阈值
 
-
 def estimate_tokens(text: str) -> int:
     """估算 token 数（粗略：中文 1.5 字符/token，英文 4 字符/token）"""
     if not text:
@@ -37,7 +36,6 @@ def estimate_tokens(text: str) -> int:
     other_chars = total_chars - chinese_chars
     return int(chinese_chars / CHINESE_CHAR_RATIO + other_chars / ENGLISH_CHAR_RATIO)
 
-
 def split_sentences(text: str) -> list[str]:
     """将文本拆分为句子（中英文句号、换行等）"""
     # 按中英文句号、分号、换行、破折号拆分
@@ -45,11 +43,9 @@ def split_sentences(text: str) -> list[str]:
     # 过滤空句和过短句（< 10 字符的没有比较价值）
     return [s.strip() for s in sentences if len(s.strip()) >= 10]
 
-
 def sentence_similarity(s1: str, s2: str) -> float:
     """计算两个句子的相似度（0-1）"""
     return SequenceMatcher(None, s1, s2).ratio()
-
 
 def find_overlaps(mind: str, voice: str, summon_prompt: str) -> list[dict]:
     """识别 mind/voice/summon_prompt 三部分之间的重复内容"""
@@ -94,7 +90,6 @@ def find_overlaps(mind: str, voice: str, summon_prompt: str) -> list[dict]:
             unique_overlaps.append(o)
 
     return unique_overlaps[:15]  # 最多显示15条
-
 
 def audit_soul(filepath: str) -> dict:
     """审计单个魂文件"""
@@ -142,7 +137,6 @@ def audit_soul(filepath: str) -> dict:
     }
 
     return result
-
 
 def main():
     output_json = "--json" in sys.argv
@@ -258,7 +252,6 @@ def main():
             print(f"   2. 消除 {len(souls_with_overlaps)} 个魂魄的 mind/voice/summon_prompt 重复内容")
         if not over_threshold and not souls_with_overlaps:
             print("   无需操作。所有魂魄 summon_prompt 长度正常，无重复内容。")
-
 
 if __name__ == "__main__":
     main()

@@ -9,7 +9,7 @@
   python3 scripts/sync-memory.py --sync     # 同步 memory（覆盖写入）
   python3 scripts/sync-memory.py --diff     # 显示当前 registry 与 memory 差异
 
-v2.0 — 三维标签体系（品级已废弃）。
+v2.0 — 体系（已废弃）。
 """
 
 import os
@@ -22,7 +22,6 @@ REGISTRY_PATH = os.path.join(SKILL_DIR, "registry.yaml")
 CALL_RECORDS_PATH = os.path.join(SKILL_DIR, "call-records.yaml")
 MEMORY_DIR = os.path.join(os.path.expanduser("~"), ".claude/projects/-Users-huyi/memory")
 CACHE_PATH = os.path.join(MEMORY_DIR, "project_soul_banner_registry_cache.md")
-
 
 def load_data():
     try:
@@ -43,21 +42,15 @@ def load_data():
 
     return souls, records
 
-
 def build_cache(souls, records, timestamp):
     n = len(souls)
 
-    # 三维标签分布
+    # 分布
     sufficiency = {"充分": [], "中等": [], "不足": []}
     transferability = {"可传输": [], "嵌入型": [], "人格型": []}
-    function_domains = Counter()
     for s in souls:
-        sf = s.get("info_sufficiency", "?")
         sufficiency.setdefault(sf, []).append(s["name"])
-        mt = s.get("methodology_transferability", "?")
         transferability.setdefault(mt, []).append(s["name"])
-        for fd in s.get("function_domains", []):
-            function_domains[fd] += 1
 
     suf_lines = []
     for k in ["充分", "中等", "不足"]:
@@ -67,7 +60,6 @@ def build_cache(souls, records, timestamp):
     for k in ["可传输", "嵌入型", "人格型"]:
         if transferability.get(k):
             mt_lines.append(f"**{k}**({len(transferability[k])}): {', '.join(transferability[k])}")
-    fd_str = ", ".join(f"{k}({v})" for k, v in function_domains.most_common())
 
     # 召唤统计
     counts = Counter(r.get("soul") for r in records if isinstance(r, dict) and "soul" in r)
@@ -81,16 +73,13 @@ def build_cache(souls, records, timestamp):
             eff_summary[name] = {"有效": 0, "部分有效": 0, "无效": 0}
         eff_summary[name][eff] = eff_summary[name].get(eff, 0) + 1
 
-    # 快速参考表 — 按信息充分度 + 召唤次数排序
+    # 快速参考表 — 按信息 + 召唤次数排序
     def sort_key(s):
-        sf_rank = {"充分": 0, "中等": 1, "不足": 2}.get(s.get("info_sufficiency", ""), 3)
         return (sf_rank, -counts.get(s.get("name", ""), 0), s.get("name", ""))
 
     table_rows = []
     for s in sorted(souls, key=sort_key):
         name = s.get("name", "?")
-        fds = ", ".join(s.get("function_domains", []))
-        mt = s.get("methodology_transferability", "?")
         domains = ", ".join(s.get("domain", [])[:3])
         exclude = s.get("trigger_exclude_summary", "")
         if exclude and len(exclude) > 40:
@@ -118,21 +107,21 @@ def build_cache(souls, records, timestamp):
 
     cache = f"""---
 name: 万民幡 Registry 热缓存
-description: {n} 魂摘要缓存——用于简单查询和匹配阶段，避免每次读取完整 registry.yaml。v2.0 三维标签体系，品级已废弃。由 scripts/sync-memory.py 自动维护。
+description: {n} 魂摘要缓存——用于简单查询和匹配阶段，避免每次读取完整 registry.yaml。v2.0 体系，已废弃。由 scripts/sync-memory.py 自动维护。
 type: project
 ---
 
 > **自动生成于 {timestamp}。** 此文件由 `scripts/sync-memory.py --sync` 从 `registry.yaml` 生成。
 
-## 三维标签分布
+## 分布
 
-**信息充分度**: {', '.join(suf_lines)}
-**方法论可传输度**: {', '.join(mt_lines)}
-**功能域标签**: {fd_str}
+**信息**: {', '.join(suf_lines)}
+**方法论**: {', '.join(mt_lines)}
+****: {fd_str}
 
 ## 快速参考
 
-| 魂 | 功能域 | 方法论 | 关键领域 | 排除场景 |
+| 魂 | ismism | 关键领域 | 排除场景 |
 |------|------|------|------|------|
 {chr(10).join(table_rows)}
 
@@ -146,7 +135,6 @@ type: project
 *最后同步: {timestamp}*
 """
     return cache
-
 
 def check_staleness():
     if not os.path.exists(CACHE_PATH):
@@ -162,7 +150,6 @@ def check_staleness():
         return True, "call-records.yaml 已更新"
 
     return False, "缓存有效"
-
 
 def show_diff():
     souls, records = load_data()
@@ -190,7 +177,6 @@ def show_diff():
             print(f"  移除 {len(removed)} 行")
         print("运行 --sync 更新。")
 
-
 def do_sync():
     souls, records = load_data()
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -202,7 +188,6 @@ def do_sync():
 
     print(f"✅ 已同步: {CACHE_PATH}")
     print(f"   {len(souls)} 魂 | {len(records)} 条召唤记录 | {len(cache):,} chars")
-
 
 def main():
     if "--check" in sys.argv:
@@ -220,7 +205,6 @@ def main():
     else:
         print(__doc__)
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

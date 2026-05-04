@@ -42,7 +42,6 @@ def load_ismism_data():
     except Exception:
         return {}
 
-
 def extract_task_structure(task_description):
     """从任务描述中启发式提取四维结构需求。
 
@@ -154,7 +153,6 @@ def extract_task_structure(task_description):
         "task_type": task_type,
         "confidence": round(field_confidence, 2),
     }
-
 
 def structural_match(task_struct, ismism_data, all_soul_names, task_desc=""):
     """基于目录 compat/incompat 的结构匹配（v3.0 — 放弃坐标算术，改用目录标注）。
@@ -271,7 +269,6 @@ def structural_match(task_struct, ismism_data, all_soul_names, task_desc=""):
 
     return results
 
-
 def fusion(surface_scores, structural_scores, task_type):
     """融合表层和结构分。权重按任务类型调整。"""
     weights = {"分析": (0.4, 0.6), "对抗": (0.2, 0.8), "建设": (0.3, 0.7), "诊断": (0.5, 0.5)}
@@ -317,7 +314,6 @@ def tokenize(text):
 
     return tokens
 
-
 # 低区分度双字词（在所有领域的魂关键词中高频出现，匹配价值低）
 STOP_BIGRAMS = {
     '分析', '主义', '批判', '理论', '哲学', '制度', '组织', '建设',
@@ -326,7 +322,6 @@ STOP_BIGRAMS = {
     '文学', '精神', '知识', '学习', '传播', '教育', '文化', '历史',
     '领域', '发展', '结构', '体系', '关系', '问题', '能力', '创新',
 }
-
 
 def keyword_overlap(task_text, keyword_text, all_soul_keywords=None):
     """计算任务与关键词列表的重叠度。使用子串匹配。
@@ -479,7 +474,6 @@ def score_soul(soul, task):
 
     return min(score, 1.0), details
 
-
 def load_usage_counts(registry_path):
     """从 call-records.yaml 加载每个魂的使用次数。文件不存在则返回空 dict。"""
     import os as _os
@@ -496,7 +490,6 @@ def load_usage_counts(registry_path):
         if soul:
             counts[soul] = counts.get(soul, 0) + 1
     return counts
-
 
 def apply_cognitive_distance(scored_results, usage_counts):
     """认知距离调整：使用越频繁的魂轻微降权，优先推荐使用者较少接触的魂。
@@ -533,9 +526,7 @@ def apply_cognitive_distance(scored_results, usage_counts):
     return scored_results
 
 def _fmt_func_domains(entry):
-    doms = entry.get('function_domains', [])
     return '+'.join(doms) if isinstance(doms, list) else str(doms)
-
 
 def format_output(results, task, task_struct=None, structural_scores=None,
                    show_gold_review=True):
@@ -563,7 +554,6 @@ def format_output(results, task, task_struct=None, structural_scores=None,
         tags_str = " ".join(struct.get("tags", []))
         lines.append("### 首选\n")
         lines.append(f"**{p['name']}** `{code}` — 表层{p.get('score',0):.2f} + 结构{struct.get('composite',0):.2f} → **{p.get('final_score',p['score']):.2f}** {tags_str}")
-        lines.append(f"- 功能域: {func_str} | 信息充分度: {p.get('info_sufficiency', '?')} | 方法论: {p.get('methodology_transferability', '?')}")
         lines.append(f"- 触发关键词: {', '.join(p['keyword_matches'][:8]) or '无'}")
         risk_label = {"none":"无","soft":"软排除","hard":"硬排除"}.get(p['exclude_risk'], p['exclude_risk'])
         lines.append(f"- 排除风险: {risk_label}")
@@ -673,9 +663,6 @@ def main():
         if score > 0 or details["exclude_risk"] in ("hard", "soft"):
             scored.append({
                 "name": soul.get("name", ""),
-                "info_sufficiency": soul.get("info_sufficiency", "?"),
-                "function_domains": soul.get("function_domains", []),
-                "methodology_transferability": soul.get("methodology_transferability", "?"),
                 "domain": soul.get("domain", []),
                 "gold_review": soul.get("gold_review", "") if show_gold else "",
                 "score": round(score, 3),
@@ -731,7 +718,6 @@ def main():
     else:
         print(format_output(top_results, task, task_struct, structural_scores,
                            show_gold_review=show_gold))
-
 
 if __name__ == "__main__":
     main()

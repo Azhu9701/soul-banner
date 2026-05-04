@@ -32,7 +32,6 @@ from difflib import SequenceMatcher
 
 SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # === 文本分析 ===
 
 def extract_claims(text: str) -> list[str]:
@@ -56,7 +55,6 @@ def extract_claims(text: str) -> list[str]:
                 break
     return claims
 
-
 def extract_methodology_markers(text: str) -> list[str]:
     """提取方法论标记——魂的核心分析工具的使用痕迹"""
     markers = {
@@ -77,17 +75,14 @@ def extract_methodology_markers(text: str) -> list[str]:
                 break
     return list(set(found))
 
-
 def extract_sections(text: str) -> list[str]:
     """提取文本的结构性段落标题"""
     sections = re.findall(r'(?:^|\n)(?:#{1,4}\s*|(?:\d+[.、)]\s*)|(?:[一二三四五六七八九十]+[、.]\s*))(.{3,40}?)(?:\n|$)', text)
     return [s.strip() for s in sections]
 
-
 def calculate_text_similarity(text_a: str, text_b: str) -> float:
     """计算两个文本的序列相似度"""
     return SequenceMatcher(None, text_a, text_b).ratio()
-
 
 # === 一致性分析 ===
 
@@ -119,7 +114,6 @@ def analyze_claim_overlap(claims_a: list[str], claims_b: list[str]) -> dict:
         "claims_b_count": len(claims_b),
     }
 
-
 def analyze_methodology_consistency(methods_a: list[str], methods_b: list[str]) -> dict:
     """检查方法论标记是否跨模型一致"""
     set_a = set(methods_a)
@@ -140,7 +134,6 @@ def analyze_methodology_consistency(methods_a: list[str], methods_b: list[str]) 
             else "方法论标记不一致——视角可能是模型产物"
         )
     }
-
 
 def analyze_structure_consistency(sections_a: list[str], sections_b: list[str]) -> dict:
     """检查文本结构是否跨模型一致"""
@@ -170,7 +163,6 @@ def analyze_structure_consistency(sections_a: list[str], sections_b: list[str]) 
         )
     }
 
-
 def compute_consensus_score(
     text_sim: float,
     claim_overlap: dict,
@@ -189,7 +181,6 @@ def compute_consensus_score(
     score += min(text_sim, 0.8) / 0.8 * 10
     return min(int(score), 100)
 
-
 def verdict(score: int) -> str:
     if score >= 70:
         return "真多视角 —— 视角来自魂的方法论结构，跨模型稳定"
@@ -197,7 +188,6 @@ def verdict(score: int) -> str:
         return "部分真视角 —— 核心方法论稳定，但部分内容受模型影响"
     else:
         return "模型产物 —— 视角高度依赖模型特性，不是独立方法论"
-
 
 # === 实验协议 ===
 
@@ -260,7 +250,6 @@ python3 scripts/cross-model-verify.py \\
 - 模型 A 和模型 B 应该有足够的能力差距（不能用 opus-4.5 vs opus-4.6 这种微小版本差异）
 """
 
-
 # === 主流程 ===
 
 def compare_files(file_a: str, file_b: str) -> dict:
@@ -294,7 +283,6 @@ def compare_files(file_a: str, file_b: str) -> dict:
         "verdict": verdict(score),
     }
 
-
 def compare_dirs(dir_a: str, dir_b: str) -> list[dict]:
     """对比两个目录中的同名魂输出"""
     results = []
@@ -319,7 +307,6 @@ def compare_dirs(dir_a: str, dir_b: str) -> list[dict]:
         })
 
     return results
-
 
 def main():
     parser = argparse.ArgumentParser(description="跨底模验证")
@@ -405,7 +392,6 @@ def main():
 
     parser.print_help()
     sys.exit(0)
-
 
 if __name__ == "__main__":
     main()
