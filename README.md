@@ -4,7 +4,10 @@
 
 > *"The banner moves, souls arrive. Match souls to tasks, tasks to souls — when the task comes, the soul possesses; when done, the soul returns. The banner-master holds the banner; souls stay within bounds."*
 
-**A transportation system between ideologies** — bringing voices from different thought-positions into one apparatus to encounter, confront, and audit each other. Not a neutral "thinking orchestration system" — it pulls apparently neutral questions into multi-field analytical spaces through ismism catalog matching.
+**聚廿四魂为幡——法有穷时，行无竟处。**
+> *Gather twenty-four souls as one banner — method has its limits, practice has none.*
+
+24 souls spawned independently, each bringing a different methodology to the same question. When all methods hit their limits, it doesn't pretend to know — it opens a practice issue for the user to take into the real world.
 
 ---
 
